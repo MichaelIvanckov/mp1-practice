@@ -7,12 +7,30 @@
 
 #define N //какя-то шляпа
 
+void help();
+void final();
+void check();
+
 int main() {
-	int a, b, c; //какие-нибудь переменные
+	char inp[1000]; //какие-нибудь переменные
 
 	setlocale(LC_ALL, "Rus");
 
-	//код для кассового аппарата
+	printf("Вступительные слова");
+
+	scanf_s("%s", inp, sizeof(inp));
+
+	while (strcmp(inp, ".quit") != 0) {
+		//switch (inp){
+		//case ".help":
+		//	help();
+		//case ".":
+		//	final();
+		//default:
+		//	check();
+		//}
+		scanf_s("%s", inp, sizeof(inp));
+	}
 
 	return 0;
 }
