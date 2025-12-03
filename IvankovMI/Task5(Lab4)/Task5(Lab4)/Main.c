@@ -7,8 +7,10 @@
 #include <conio.h>
 
 #define N 1000       //макс длина ввода
-#define R(f) strcmp(inp, f) == 0                //просто дл€ удобства
-#define scan {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp));}
+#define NPR          //макс длина таблицы продуктов (не больше 9999)
+#define R(f) (strcmp(inp, f) == 0)                //просто дл€ удобства
+#define ISCOMMAND (strcmp(inp[0], ".") == 0)
+#define scan {printf("----\b\b\b\b"); scanf_s(format, inp, inp2, sizeof(inp), sizeof(inp2));}
 
 
 //ѕоддерж. команды: 
@@ -21,8 +23,8 @@
 // финиш
 // выход.
 
-void choose(char *inp);
-void coupon(char* inp, char* coup);   //+
+void choose(char* inp, char* inp2, int* coup);
+void coupon(char* inp, char* inp2, char* coup);   //+
 void info() { ; }
 //void help();                        //+
 //void callthecashier();              //+
@@ -31,11 +33,11 @@ void Galina() { ; }
 void final() { ; }
 void barcode(char *inp);
 
-//void file_to_sortedmatrix(FILE* crt, char* dst[][]); { ; }
+void file_to_sortedmatrix(FILE* crt, char* dst[][3], int n) { ; }
 
 char helpi[] = "¬водите ниже цифры \"отсканированных штрихкодов\" и специальные команды, а программа \nсформирует чек и расчитает итоговую стоимость и размер скидки в рубл€х (без копеек). \n÷ифры \"штрихкода\" вводите слитно (без пробелов), в дес€тичной системе счислени€, \nкоманды и \"штрихкоды\" раздел€йте пробелами и/или переносами строк. \n—писок команд: \n.coupon           Ч предъ€вить скидочный купон (затем попрос€т ввести номер купона) \n.info <штрихкод>  Ч получить информацию о товаре, не добавл€€ его в корзину \n(обратите внимание, команду и \"штрихкод\" надо писать раздельно, пример: .info 0123) \n.. / .fin         Ч завершить \"сканирование товаров\" и перейти к оплате \n.. / .fin (после оплаты) Ч закончить просмотр чека и завершить покупку \n.callthecashier   Ч позвать сотрудника \n.Galya            Ч отменить уже добавленный к покупке товар \n.Galina           Ч отменить весь процесс покупки \n.quit             Ч выйти из программы и завершить процесс \n.help             Ч вывести эту инструкцию ещЄ раз \n*просто введЄнный штрихкод добавл€ет товар в корзину и выводит базовую информацию о нЄм \n*\"касса\" обслуживает покупателей непрерывно: после завершени€ одной покупки начнетс€ следующа€\n\n";
-char format[9];
-char* products[9999][3];
+char format[9];                         //строка формта дл€ scanf_s вида "%Ns", где N - максимально разрешенна€ длина ввода
+char* products[NPR][3];                 //двумерный массив указателей на строки, представл€ющий таблтцу товаров
 
 
 
@@ -43,15 +45,22 @@ char* products[9999][3];
 //_getch();
 //printf("\b\b\b\b");
 
+//int main() {
+//	int n;
+//	char s[20];
+//	scanf_s("%d %5s", &n, s);
+//	printf("%d, %s", n, s);
+//	return 0;
+//}
 
 int main() {
 	
 	FILE* list;
-	char inp[N + 1];    //format[9];
+	char inp[N + 1], inp2[N + 1];    //format[9];
 	int n, coup = 0, error;
 	
 	size_t szf = sizeof(format);
-	snprintf(format, szf, "%%%ds", N);
+	snprintf(format, szf, "%%%ds %%%ds", N, N);
 
 	setlocale(LC_ALL, "Rus");
 
@@ -67,10 +76,11 @@ int main() {
 	printf("\n------------------ ƒобро пожаловать в магазин \"ћагазин\"! ¬водите свои товары ------------------\n\n");
 
 	//printf("%d\n", n);
+	//scanf_s(888, format, inp, inp2, sizeof(inp), sizeof(inp2));
 	scan;
 	while (strcmp(inp, ".quit") != 0) {
 		
-		choose(inp, &coup);
+		choose(inp, inp2, &coup);
 		scan;
 
 	}
@@ -78,13 +88,13 @@ int main() {
 }
 
 
-void choose(char* inp, int* coup) {
+void choose(char* inp, char* inp2, int* coup) {
 	if (R(".help"))
 		printf(helpi);
 	else if (R(".callthecashier"))
 		printf("скоро к вам подойдет сотрудник");
 	else if (R(".coupon"))
-		coupon(inp, coup);
+		coupon(inp, inp2, coup);
 	else if (R(".info"))
 		info();
 	else if (R(".Galya"))
@@ -98,10 +108,13 @@ void choose(char* inp, int* coup) {
 }
 
 
-void coupon(char* inp,int* coup) {
-	printf("¬ведите номер своего купона: ");
-	scan;
-	* coup = 1;
+void coupon(char* inp, char* inp2, char* coup) {
+	if (R(".coupon")) {
+		printf("¬ведите номер своего купона: ");
+		scan;
+	}
+	printf("ќтлично, теперь на некоторые товары вы получите скидки!\n");
+	*coup = 1;
 }
 
 
