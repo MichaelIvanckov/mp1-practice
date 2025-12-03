@@ -9,8 +9,9 @@
 #define N 1000       //макс длина ввода
 #define NPR          //макс длина таблицы продуктов (не больше 9999)
 #define R(f) (strcmp(inp, f) == 0)                //просто для удобства
+#define R2(f) (strcmp(inp2, f) == 0)              //сравнение второго инпута
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
-#define scan {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp), inp2, sizeof(inp2));}
+#define scan {char buff[N + 1]; printf("----\b\b\b\b"); fgets(buff, N, stdin); sscanf_s(buff, format, inp, sizeof(inp), inp2, sizeof(inp2));}
 
 
 //Поддерж. команды: 
@@ -110,6 +111,7 @@ void choose(char* inp, char* inp2, int* coup) {
 
 
 void coupon(char* inp, char* inp2, char* coup) {
+	char coupon[21];     //если нужна будет действительно проверка купона
 	if (R(".coupon")) {
 		printf("Введите номер своего купона: ");
 		scan;
