@@ -6,12 +6,19 @@
 #include <locale.h>
 #include <conio.h>
 
-#define N 1000       //макс длина ввода
-#define NPR          //макс длина таблицы продуктов (не больше 9999)
+//НАСТРОЙКИ://
+#define N   1000     //макс длина ввода
+#define NPR 9999     //макс длина таблицы продуктов (не больше 9999)
+
+
 #define R(f) (strcmp(inp, f) == 0)                //просто для удобства
 #define R2(f) (strcmp(inp2, f) == 0)              //сравнение второго инпута
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
-#define scan {char buff[N + 1]; printf("----\b\b\b\b"); fgets(buff, N, stdin); sscanf_s(buff, format, inp, sizeof(inp), inp2, sizeof(inp2));}
+#define scan {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp), inp2, sizeof(inp2));}
+//деклассированные элементы:
+#define FGscan {char buff[N + 1]; printf("----\b\b\b\b"); fgets(buff, N, stdin); sscanf_s(buff, format, inp, sizeof(inp), inp2, sizeof(inp2));}
+#define scan_(fl) input(format, b, inp, inp2, fl)
+#define NEWscan ic = scan_(ic)
 
 
 //Поддерж. команды: 
@@ -25,7 +32,7 @@
 // выход.
 
 void choose(char* inp, char* inp2, int* coup);
-void coupon(char* inp, char* inp2, char* coup);   //+
+void coupon(char* inp, char* inp2, int* coup);   //+
 void info() { ; }
 //void help();                        //+
 //void callthecashier();              //+
@@ -35,10 +42,13 @@ void final() { ; }
 void barcode(char *inp);
 
 void file_to_sortedmatrix(FILE* crt, char* dst[][3], int n) { ; }
+int input(char format[], char buff[], char inp[], char inp2[], int flag);
+int is_last_word();
 
 char helpi[] = "Вводите ниже цифры \"отсканированных штрихкодов\" и специальные команды, а программа \nсформирует чек и расчитает итоговую стоимость и размер скидки в рублях (без копеек). \nЦифры \"штрихкода\" вводите слитно (без пробелов), в десятичной системе счисления, \nкоманды и \"штрихкоды\" разделяйте пробелами и/или переносами строк. \nСписок команд: \n.coupon           — предъявить скидочный купон (затем попросят ввести номер купона) \n.info <штрихкод>  — получить информацию о товаре, не добавляя его в корзину \n(обратите внимание, команду и \"штрихкод\" надо писать раздельно, пример: .info 0123) \n.. / .fin         — завершить \"сканирование товаров\" и перейти к оплате \n.. / .fin (после оплаты) — закончить просмотр чека и завершить покупку \n.callthecashier   — позвать сотрудника \n.Galya            — отменить уже добавленный к покупке товар \n.Galina           — отменить весь процесс покупки \n.quit             — выйти из программы и завершить процесс \n.help             — вывести эту инструкцию ещё раз \n*просто введённый штрихкод добавляет товар в корзину и выводит базовую информацию о нём \n*\"касса\" обслуживает покупателей непрерывно: после завершения одной покупки начнется следующая\n\n";
 char format[14];                         //строка формта для scanf_s вида "%Ns", где N - максимально разрешенная длина ввода
-char* products[NPR][3];                  //двумерный массив указателей на строки, представляющий таблтцу товаров
+char* products[NPR][3];                  //двумерный массив указателей на строки, представляющий таблицу товаров
+//char* b;
 
 
 
@@ -58,11 +68,13 @@ int main0() {
 int main() {
 	
 	FILE* list;
-	char inp[N + 1], inp2[N + 1];    //format[9];
-	int n, coup = 0, error;
+	char inp[N + 1], inp2[N + 1]; //buff[N + 1];    //format[9];
+	int n, coup = 0, error, ic = 0;
+	
+	//b = buff;
 	
 	size_t szf = sizeof(format);
-	snprintf(format, szf, "%%%ds %%%ds", N, N);
+	snprintf(format, szf, "%%%ds", N);
 
 	setlocale(LC_ALL, "Rus");
 
@@ -82,7 +94,7 @@ int main() {
 	scan;
 	while (strcmp(inp, ".quit") != 0) {
 		
-		choose(inp, inp2, &coup);
+		choose(inp, inp2, &coup, ic);
 		scan;
 
 	}
@@ -90,7 +102,35 @@ int main() {
 }
 
 
-void choose(char* inp, char* inp2, int* coup) {
+int is_last_word() {            //странная, конечно, реализация. но зато простая, как топор
+	char c;
+	if (c = fgetc(stdin), printf("\b"), c == '\n') {
+		//printf("\b");
+		return 1;
+	}
+	else if (c = fgetc(stdin), printf("\b"), c == ' ') {
+		do c = fgetc; 
+		while (c = fgetc(stdin), printf("\b"), c == ' ');
+		return (c  == '\n') ? 1 : 0;
+	}
+	else
+		return 0;
+}
+
+
+int input(char format[], char buff[], char inp[], char inp2[], int flag) {
+	char c;
+	if (flag == 0)
+		fgets(buff, N + 1, stdin);
+	sscanf_s(buff, format, inp, sizeof(inp));
+	if (fgetc(buff) == '\n')
+		return 0;
+	else
+		return 1;
+}
+
+
+void choose(char* inp, char* inp2, int* coup, int ic) {
 	if (R(".help"))
 		printf(helpi);
 	else if (R(".callthecashier"))
@@ -110,13 +150,15 @@ void choose(char* inp, char* inp2, int* coup) {
 }
 
 
-void coupon(char* inp, char* inp2, char* coup) {
-	char coupon[21];     //если нужна будет действительно проверка купона
-	if (R(".coupon")) {
+void coupon(char* inp, char* inp2, int* coup) {
+	//char coupon[21];     //если нужна будет действительно проверка купона
+	if (is_last_word()) {
 		printf("Введите номер своего купона: ");
-		scan;
 	}
+	scan;
+	//strcpy(coupon, inp);
 	printf("Отлично, теперь на некоторые товары вы получите скидки!\n");
+	printf("№ купона: %s\n", inp);
 	*coup = 1;
 }
 
