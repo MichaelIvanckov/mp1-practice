@@ -14,6 +14,7 @@
 #define R(f) (strcmp(inp, f) == 0)                //просто для удобства
 #define R2(f) (strcmp(inp2, f) == 0)              //сравнение второго инпута
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
+#define ISLW is_last_word()
 #define scan {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp), inp2, sizeof(inp2));}
 //деклассированные элементы:
 #define FGscan {char buff[N + 1]; printf("----\b\b\b\b"); fgets(buff, N, stdin); sscanf_s(buff, format, inp, sizeof(inp), inp2, sizeof(inp2));}
@@ -98,18 +99,19 @@ int main() {
 		scan;
 
 	}
+	fclose(list);
 	return 0;
 }
 
 
 int is_last_word() {            //странная, конечно, реализация. но зато простая, как топор
-	char c;
-	if (c = fgetc(stdin), printf("\b"), c == '\n') {
-		//printf("\b");
+	char c = fgetc(stdin);
+	printf("\b");
+	if (c == '\n') {
 		return 1;
 	}
-	else if (c = fgetc(stdin), printf("\b"), c == ' ') {
-		do c = fgetc; 
+	else if (c == ' ') {
+		do c = fgetc(stdin); 
 		while (c = fgetc(stdin), printf("\b"), c == ' ');
 		return (c  == '\n') ? 1 : 0;
 	}
