@@ -17,9 +17,9 @@
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
 #define ISCOM ISCOMMAND 
 #define ISLW is_last_word()
-#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * N);}
+#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * N);} //”–јјјјј!!! –јЅќ“ј≈“!!!! ¬¬ќƒ ѕќч»Ќ»Ћ»!!!
 #define scan_t scanf_s(format, inp, sizeof(char) * N)
-#define scan_with_error {printf("-----\b\b\b\b\b"); scanf_s(format, inp, sizeof(inp));}  //вот она, где собака зарыта
+#define old_scan_with_error {printf("-----\b\b\b\b\b"); scanf_s(format, inp, sizeof(inp));}  //вот она, где собака была зарыта: "sizeof(inp)" возвращает размер ” ј«ј“≈Ћя, как раз, видимо, равный 8 байтам, а вот "sizeof(char) * N" возвращает размер байтового массива длиной N
 //деклассированные элементы:    (возможно, никогда не используютс€)
 #define scan_old {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp), inp2, sizeof(inp2));}
 #define FGscan {char buff[N + 1]; printf("----\b\b\b\b"); fgets(buff, N, stdin); sscanf_s(buff, format, inp, sizeof(inp), inp2, sizeof(inp2));}
