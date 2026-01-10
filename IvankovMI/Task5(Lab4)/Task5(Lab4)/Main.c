@@ -17,7 +17,9 @@
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
 #define ISCOM ISCOMMAND 
 #define ISLW is_last_word()
-#define scan {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp));}
+#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * N);}
+#define scan_t scanf_s(format, inp, sizeof(char) * N)
+#define scan_with_error {printf("-----\b\b\b\b\b"); scanf_s(format, inp, sizeof(inp));}  //вот она, где собака зарыта
 //деклассированные элементы:    (возможно, никогда не используются)
 #define scan_old {printf("----\b\b\b\b"); scanf_s(format, inp, sizeof(inp), inp2, sizeof(inp2));}
 #define FGscan {char buff[N + 1]; printf("----\b\b\b\b"); fgets(buff, N, stdin); sscanf_s(buff, format, inp, sizeof(inp), inp2, sizeof(inp2));}
@@ -44,6 +46,7 @@ void Galya() { ; }   // отмена поз.
 void Galina() { ; }  // отмена покупки
 void final() { ; }
 void barcode(char* inp);
+void test(char* inp);
 
 void file_to_sortedmatrix(FILE* crt, char* dst[][4], int n);
 int input(char format[], char buff[], char inp[], char inp2[], int flag);   //стереть ?????
@@ -156,8 +159,10 @@ void choose(char* inp, char* inp2, int* coup, int ic) {
 		Galina();
 	else if (R("..") && R(".fin"))
 		final();
+	else if (R(".test"))
+		test(inp);
 	else
-		barcode(inp, inp);
+		barcode(inp);
 }
 
 
@@ -174,6 +179,12 @@ void coupon(char* inp, int* coup) {
 }
 
 
-void barcode(char *inp) {
-	;
+void barcode(char* inp) {
+	printf("ТЕСТ: Штрихкод %s принят\n", inp);
+}
+
+
+void test(char* inp){
+	scan;
+	printf("ТЕСТ: %s\n", inp);
 }
