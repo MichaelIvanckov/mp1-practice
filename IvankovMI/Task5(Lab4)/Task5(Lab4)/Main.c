@@ -110,17 +110,19 @@ int main() {
 
 int is_last_word() {            //странная, конечно, реализация. но зато простая, как топор
 	char c = fgetc(stdin);
-	printf("\b");
 	if (c == '\n') {
 		return 1;
 	}
-	else if (c == ' ') {
-		do c = fgetc(stdin); 
-		while (c = fgetc(stdin), printf("\b"), c == ' ');
-		return (c  == '\n') ? 1 : 0;
+	while (c == ' ') {
+		c = fgetc(stdin); 
 	}
-	else
+	if (c == '\n') {
+		return 1;
+	}
+	else {
+		printf("\b");
 		return 0;
+	}
 }
 
 
