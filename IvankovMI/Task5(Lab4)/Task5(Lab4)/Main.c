@@ -16,7 +16,7 @@
 #define PNL 70       //макс длина имени продукта                                                                            |
 #define CPL 21       //макс длина купона                                                                                    |
 #define ERL 100      //макс длина сообщения об ошибке                                                                       |
-#define HK  0        //спрашивать ли про горячие клавиши (по умолчанию выкл)                                                |
+#define HK  1        //спрашивать ли про горячие клавиши (по умолчанию выкл)                                                |
 #define SOURCE_FILE  list_of_items_ANSI.txt        //имя файла со списком продуктов (только ANSI)                           |
 #define DESTINATION  Receipt.txt                   //имя файла для сохранения чека (при наличии одноименных добавится цифра)|
 //--------------------------------------------------------------------------------------------------------------------------|
@@ -25,8 +25,15 @@
 #define FNL 50       //макс длина имени файла
 #define FTC 50       //макс колл-во попыток создать файл
 
+#define I_COUNT  13  
+#define I_KEYS1  {'c',       'i',     'h',     'x',               'g',            'G',             'f',    't',     'a',        'b',       's',     'e',         'd'         }
+#define I_KEYS2  {'C',       'I',     'H',     'X',               'g',            'G',             'F',    'T',     'A',        'B',       'S',     'E',         'D'         }
+#define I_WORDS  {".coupon", ".info", ".help", ".callthecashier", ".GalyaOtmena", ".GalinaOtmena", ".fin", ".test", ".showall", ".showmy", ".save", ".enablehk", ".disablehk"}
+
 #define DEBUG_RAW 39
 #define NOP 1;
+
+#define IS_DIGIT(i) (i == '0' || i == '1' || i == '2' || i == '3' || i == '4' || i == '5' || i == '6' || i == '7' || i == '8' || i == '9')
 
 #define CONCAT(a, b) a##b
 #define TO_STR_(a) #a
@@ -40,7 +47,8 @@
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
 #define ISCOM ISCOMMAND 
 #define ISLW is_last_word()
-#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * N);} //УРААААА!!! РАБОТАЕТ!!!! ВВОД ПОчИНИЛИ!!!
+#define iscan interactive_input(inp, sizeof(char) * (N + 1), N)
+#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * (N + 1));} //УРААААА!!! РАБОТАЕТ!!!! ВВОД ПОчИНИЛИ!!!
 #define scan_t scanf_s(format, inp, sizeof(char) * N)
 #define B117 "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 
@@ -58,7 +66,8 @@
 // показать все товары
 // показать текущую корзину
 
-void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
+//void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
+void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
 void coupon(char* inp, int* coup, char coupon[]);         //+
 void info(char* inp, struct product products[], int n);   //+
 //void help();                                            //+
@@ -76,6 +85,7 @@ int calc(int price, int discount);
 errno_t fill_the_table(FILE* src, struct product dst[], int n);
 void set_discounts(struct product dst[], int n);
 int is_last_word();
+void eat_the_line();
 char* point_to_the_first_nonspace(char* str, int n);
 struct product* fast_search(struct product products[], int n, char key[]);
 struct item_in_receipt* fast_search_in_receipt(struct item_in_receipt receipt[], int n, char key[]);
@@ -86,6 +96,7 @@ FILE* make_n_open_file_for_receipt(char* name, int nl, char new_name[], int n);
 
 void raise(const char* const message, int data1, int data2, int data3);
 int is_interactive();
+void interactive_input(char* buffer, size_t size_of_buffer, size_t n);
 
 
 struct { char* msg; int data; int data2; int data3; } error_msg;   //указатель на сообщение об ошибке
@@ -124,9 +135,9 @@ struct item_in_receipt {
 int main() {
 	//объявляем все локальные в main
 	FILE* list;
-	char inp[N + 1], error_output[ERL + 1], inp2[N + 1]; //buff[N + 1];    //format[9];
+	char inp[N + 1], error_output[ERL + 1], costil[1];       //inp2[N + 1]; //buff[N + 1];    //format[9];
 	char coupon_n[CPL + 1];
-	int n, coup = 0, l = 0, i = 0, hk = 0;
+	int n, coup = 0, l = 0, i = 0, hk = 0, new_word = 1;
 	unsigned int clients = 0, total = 0;
 	errno_t  error, err2;
 	struct item_in_receipt* receipt;
@@ -151,7 +162,8 @@ int main() {
 	else if (HK) {
 		printf("Для включения горячих клавиш введите что-нибудь (иначе просто нажмите Enter):\n  *при включенных горячих клавишах при наборе первого символа не работают специальные клавиши, такие как стрелки и F11\b"B117);
 		if (!is_last_word()) {
-			scan;
+			//fgets(costil, sizeof(char), stdin);
+			eat_the_line();
 			printf("**  режим горячих клавишь включен  **\n\n");
 			hk = 1;
 		}
@@ -212,18 +224,25 @@ int main() {
 	set_discounts(products, n);
 	printf("\n------------------ Добро пожаловать в магазин \"Магазин\"! Вводите свои товары ------------------\n\n");
 
-	scan;
+	if (hk & new_word) { 
+		//fgets(costil, sizeof(char), stdin); 
+		iscan; 
+	}
+	else scan;
 	while (strcmp(inp, ".quit") != 0) {
 		
-		choose(inp, inp2, &coup, coupon_n, receipt, &l, n, i, &clients, &total);
+		//choose(inp, inp2, &coup, coupon_n, receipt, &l, n, i, &clients, &total);
+		choose(inp, &coup, coupon_n, receipt, &l, n, i, &clients, &total);
 		if (error_flag) {
 			printf("Ошибка обработки команды пользователя.\n");
 			sprintf_s(error_output, sizeof(char) * ERL, "Сообщение об ошибке: %s\n", error_msg.msg);
 			printf(error_output, error_msg.data);
 			return 0;
 		}
+		new_word = is_last_word();
 		printf("\n");
-		scan;
+		if (hk & new_word) iscan;
+		else scan;
 
 	}
 	free_the_basket(receipt, l);
@@ -247,8 +266,15 @@ int is_last_word() {            //странная, конечно, реализация. но зато простая
 	}
 }
 
+void eat_the_line() {
+	char t;
+	t = fgetc(stdin);
+	while (t != '\n')
+		t = fgetc(stdin);
+}
 
-char* point_to_the_first_nonspace(char* str, int n){
+
+char* point_to_the_first_nonspace(char* str, int n) {
 	int i;
 	for (i = 0; i < n; i++) {
 		if (str[i] == '\n')
@@ -367,6 +393,47 @@ void raise(const char* const message, int data1, int data2, int data3) {
 
 int is_interactive() {
 	return _isatty(_fileno(stdin));
+}
+
+void interactive_input(char* buffer, size_t size_of_buffer, size_t n) {
+	char  keys1[I_COUNT] = I_KEYS1;
+	char  keys2[I_COUNT] = I_KEYS2;
+	char* words[I_COUNT] = I_WORDS;
+	char inpch, sec;
+	int i, t;
+	printf("--------\b\b\b\b\b\b\b\b");
+	inpch = _getch();
+	while (inpch == 0 || inpch == -32 || inpch == 224) {
+		inpch = _getch();
+		printf("Спецклавиша № %d\n", inpch);
+		inpch = _getch();
+	}
+	for (i = 0; i < I_COUNT; i++)
+		if (inpch == keys1[i] || inpch == keys2[i])
+			break;
+	if (i == I_COUNT) {
+		printf("%c", inpch);
+		if (IS_DIGIT(inpch))
+			printf("---    \b\b\b\b\b\b\b");
+		else if (inpch == '.')
+			printf("       \b\b\b\b\b\b\b");
+		if (!(t = (inpch == ' ' || inpch == '\t'))) {
+			buffer[0] = inpch;
+			sec = fgetc(stdin);
+			if (sec == ' ' || sec == '\t') {
+				buffer[1] = '\0';
+				return;
+			}
+			else
+				buffer[1] = sec;
+		}
+		scanf_s(format, (t)? buffer : buffer + 2, size_of_buffer - sizeof(char) * 2);
+	}
+	else {
+		printf("%s\n", words[i]);
+		ungetc('\n', stdin);
+		strncpy_s(buffer, size_of_buffer, words[i], n);
+	}
 }
 
 
@@ -497,7 +564,8 @@ void set_discounts(struct product dst[], int n){
 }
 
 
-void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t) {
+//void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t)
+void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t) {
 	if (R(".help"))
 		printf(helpi);
 	else if (R(".callthecashier"))
@@ -567,8 +635,12 @@ void barcode(char* inp, struct product products[], struct item_in_receipt receip
 			pos_in_rec->count++;
 		printf("Товар добавлен в корзину.  (колл-во: %2d)\nШТРИХКОД: %s  НАЗВАНИЕ: %s \nЦЕНА: %3d руб.  СКИДКА: %2d%%  ЦЕНА СО СКИДКОЙ: %3d\n", pos_in_rec->count, product_ptr->number, product_ptr->name, product_ptr->price, product_ptr->discount, calc(product_ptr->price, product_ptr->discount));
 	}	
-	else
-		printf("Товар с таким штрихкодом не найден.\n");
+	else {
+		if (inp[0] == '.')
+			printf("Неизвестная команда (%s).\n", inp);
+		else
+			printf("Товар с таким штрихкодом не найден.  (%s)\n", inp);
+	}
 }
 
 
@@ -711,8 +783,8 @@ void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[],
 		raise("Не удалось распечатать чек (код ошибки: %d)", err, 0, 0);
 	printf("\n\nЕсли хотите сохранить чек в текстовом файле");
 	if (interactive) {
-		printf(" нажмите клавишу [S] или введите \".save\"");
-		if ((inpch = _getch()) == 's' || inpch == 'S') {
+		printf(" нажмите клавишу [S] или введите \".save\"\n");
+		/*if ((inpch = _getch()) == 's' || inpch == 'S') {
 			file = make_n_open_file_for_receipt(DST_FILE, FNL, filename, FTC);
 			if (file != NULL) {
 				err = make_the_receipt(file, basket, *n, *coup);
@@ -732,10 +804,11 @@ void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[],
 			printf("%c", inpch);
 			ungetc(inpch, stdin);
 			{ printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * 1000); };
-		}
+		}*/
+		iscan;
 	}
 	else {
-		printf(" введите \".save\"");
+		printf(" введите \".save\"\n");
 		scan;
 	}
 	if ((strcmp(inp, ".save") == 0)) {
