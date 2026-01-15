@@ -224,7 +224,8 @@ int main() {
 	set_discounts(products, n);
 	printf("\n------------------ Добро пожаловать в магазин \"Магазин\"! Вводите свои товары ------------------\n\n");
 
-	if (hk & new_word) { 
+	//if (hk & new_word) { 
+	if (hk) {
 		//fgets(costil, sizeof(char), stdin); 
 		iscan; 
 	}
@@ -239,9 +240,10 @@ int main() {
 			printf(error_output, error_msg.data);
 			return 0;
 		}
-		new_word = is_last_word();
+		//new_word = is_last_word();
 		printf("\n");
-		if (hk & new_word) iscan;
+		//if (hk & new_word) iscan;
+		if (hk) iscan;
 		else scan;
 
 	}
@@ -269,8 +271,9 @@ int is_last_word() {            //странная, конечно, реализация. но зато простая
 void eat_the_line() {
 	char t;
 	t = fgetc(stdin);
-	while (t != '\n')
+	while (t != '\n' && t != EOF)
 		t = fgetc(stdin);
+	ungetc(t, stdin);
 }
 
 
@@ -400,7 +403,12 @@ void interactive_input(char* buffer, size_t size_of_buffer, size_t n) {
 	char  keys2[I_COUNT] = I_KEYS2;
 	char* words[I_COUNT] = I_WORDS;
 	char inpch, sec;
-	int i, t;
+	int i, t, а_надо;
+	а_надо = is_last_word();
+	if (!а_надо) {
+		scanf_s(format, buffer, size_of_buffer);
+		return;
+	}
 	printf("--------\b\b\b\b\b\b\b\b");
 	inpch = _getch();
 	while (inpch == 0 || inpch == -32 || inpch == 224) {
