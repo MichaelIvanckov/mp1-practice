@@ -16,9 +16,10 @@
 #define PNL 70       //макс длина имени продукта                                                                            |
 #define CPL 21       //макс длина купона                                                                                    |
 #define ERL 100      //макс длина сообщени€ об ошибке                                                                       |
-#define HK  1        //спрашивать ли про гор€чие клавиши (по умолчанию выкл)                                                |
+#define HK  0        //спрашивать ли про гор€чие клавиши (по умолчанию выкл)                                                |
 #define SOURCE_FILE  list_of_items_ANSI.txt        //им€ файла со списком продуктов (только ANSI)                           |
 #define DESTINATION  Receipt.txt                   //им€ файла дл€ сохранени€ чека (при наличии одноименных добавитс€ цифра)|
+#define STAFFPASSWORD qwertyuiop                   //пароль соьрудника магазина (ANSI, не больше N символов)               |
 //--------------------------------------------------------------------------------------------------------------------------|
 
 
@@ -41,6 +42,7 @@
 #define MAKE_FORMAT(a) "%"TO_STR(a)"s"
 #define SRC_FILE TO_STR(SOURCE_FILE)
 #define DST_FILE TO_STR(DESTINATION)
+#define STFPASS TO_STR(STAFFPASSWORD)
 #define BCF MAKE_FORMAT(BCL)
 #define BCformat BCF
 #define R(f) (strcmp(inp, f) == 0)                //просто дл€ удобства
@@ -68,17 +70,17 @@
 
 //void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
 void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
-void coupon(char* inp, int* coup, char coupon[]);         //+
-void info(char* inp, struct product products[], int n);   //+
-//void help();                                            //+
-//void callthecashier();                                  //+
-void Galya() { ; }   // отмена поз.
-void Galina() { ; }  // отмена покупки
-void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[], int* n, int interactive, int* cli, int* tot);
-void barcode(char* inp, struct product products[], struct item_in_receipt receipt[], int* l, int n);
-void test(char* inp);                                     //+
-void show_all_products(struct product products[], int n); //+
-void show_basket(struct item_in_receipt basket[], int n); //+
+void coupon(char* inp, int* coup, char coupon[]);                                  //+
+void info(char* inp, struct product products[], int n);                            //+
+//void help();                                                                     //+
+//void callthecashier();                                                           //+
+void Galya(char* inp, struct item_in_receipt receipt[], int n);                    // отмена поз.
+void Galina(char* inp, int* coup, struct item_in_receipt receipt[], int* n);       // отмена покупки
+void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[], int* n, int interactive, int* cli, int* tot);  //+
+void barcode(char* inp, struct product products[], struct item_in_receipt receipt[], int* l, int n);  //+
+void test(char* inp);                                                             //+
+void show_all_products(struct product products[], int n);                         //+
+void show_basket(struct item_in_receipt basket[], int n, int coup, char* coupon); //+
 
 
 int calc(int price, int discount);
@@ -102,7 +104,24 @@ void interactive_input(char* buffer, size_t size_of_buffer, size_t n);
 struct { char* msg; int data; int data2; int data3; } error_msg;   //указатель на сообщение об ошибке
 int error_flag = 0;                                               //флаг, поднимаемый ситуативно вызываемыми функци€ми в случае ошибки
 
-char helpi[] = "¬водите ниже цифры \"отсканированных штрихкодов\" и специальные команды, а программа \nсформирует чек и расчитает итоговую стоимость и размер скидки в рубл€х (без копеек). \n÷ифры \"штрихкода\" вводите слитно (без пробелов), в дес€тичной системе счислени€, \nкоманды и \"штрихкоды\" раздел€йте пробелами и/или переносами строк. \n—писок команд: \n.coupon           Ч предъ€вить скидочный купон (затем попрос€т ввести номер купона) \n.info <штрихкод>  Ч получить информацию о товаре, не добавл€€ его в корзину \n(обратите внимание, команду и \"штрихкод\" надо писать раздельно, пример: .info 0123) \n.. / .fin         Ч завершить \"сканирование товаров\" и перейти к оплате \n.. / .fin (после оплаты) Ч закончить просмотр чека и завершить покупку \n.callthecashier   Ч позвать сотрудника \n.Galya            Ч отменить уже добавленный к покупке товар \n.Galina           Ч отменить весь процесс покупки \n.quit             Ч выйти из программы и завершить процесс \n.help             Ч вывести эту инструкцию ещЄ раз \n*просто введЄнный штрихкод добавл€ет товар в корзину и выводит базовую информацию о нЄм \n*\"касса\" обслуживает покупателей непрерывно: после завершени€ одной покупки начнетс€ следующа€\n\n";
+char helpi[] = \
+"¬водите ниже цифры \"отсканированных штрихкодов\" и специальные команды, а программа \n\
+сформирует чек и расчитает итоговую стоимость и размер скидки в рубл€х (без копеек). \n\
+÷ифры \"штрихкода\" вводите слитно (без пробелов), в дес€тичной системе счислени€, \n\
+команды и \"штрихкоды\" раздел€йте пробелами и/или переносами строк. \n\
+—писок команд: \n\
+.coupon                  Ч предъ€вить скидочный купон (затем попрос€т ввести номер купона) \n\
+.info <штрихкод>         Ч получить информацию о товаре, не добавл€€ его в корзину \n\
+(обратите внимание, команду и \"штрихкод\" надо писать раздельно, пример: .info 0123) \n\
+.. / .fin                Ч завершить \"сканирование товаров\" и перейти к оплате \n\
+.. / .fin (после оплаты) Ч закончить просмотр чека и завершить покупку \n\
+.callthecashier          Ч позвать сотрудника \n\
+.Galya / .remove         Ч отменить уже добавленный к покупке товар \n\
+.Galina / .dropbasket    Ч отменить весь процесс покупки \n\
+.quit                    Ч выйти из программы и завершить процесс \n\
+.help                    Ч вывести эту инструкцию ещЄ раз \n\
+*просто введЄнный штрихкод добавл€ет товар в корзину и выводит базовую информацию о нЄм \n\
+*\"касса\" обслуживает покупателей непрерывно: после завершени€ одной покупки начнетс€ следующа€\n\n";
 
 char format[14];                         //строка формата дл€ scanf_s вида "%Ns", где N - максимально разрешенна€ длина ввода
 
@@ -190,7 +209,11 @@ int main() {
 	products = make_list_of_products(n);
 	if (products == NULL) {
 		printf("ќшибка выделени€ пам€ти при динамическом выделении пам€ти дл€ таблицы продуктов.\n");
-		fclose(list);
+		err2 = fclose(list);
+		if (err2 != 0) {
+			printf("ѕри закрытии файла возникла ошибка. (код ошибки: %d)\n", error);
+			return err2;
+		}
 		return 0;
 	}
 #endif
@@ -345,6 +368,9 @@ errno_t free_the_table(struct product table[], int n) {
 	int i;
 	for (i = 0; i < n; i++)
 		free(table[i].name);
+#if ! (NPR > 0)
+	free(table);
+#endif
 	return (errno_t)(0);
 }
 
@@ -438,7 +464,7 @@ void interactive_input(char* buffer, size_t size_of_buffer, size_t n) {
 		scanf_s(format, (t)? buffer : buffer + 2, size_of_buffer - sizeof(char) * 2);
 	}
 	else {
-		printf("%s\n", words[i]);
+		printf("%s            \n", words[i]);
 		ungetc('\n', stdin);
 		strncpy_s(buffer, size_of_buffer, words[i], n);
 	}
@@ -582,10 +608,10 @@ void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receip
 		coupon(inp, coup, coupon_n);
 	else if (R(".info"))
 		info(inp, products, n);
-	else if (R(".GalyaOtmena"))
-		Galya();
-	else if (R(".GalinaOtmena"))
-		Galina();
+	else if (R(".GalyaOtmena") || R(".remove"))
+		Galya(inp, receipt, *l);
+	else if (R(".GalinaOtmena") || R(".dropbasket"))
+		Galina(inp, coup, receipt, l);
 	else if (R("..") || R(".fin"))
 		final(inp, coup, coupon_n, receipt, l, i, cl, t);
 	else if (R(".test"))
@@ -593,7 +619,7 @@ void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receip
 	else if (R(".showall"))
 		show_all_products(products, n);
 	else if (R(".showmy"))
-		show_basket(receipt, *l);
+		show_basket(receipt, *l, *coup, coupon_n);
 	else
 		barcode(inp, products, receipt, l, n);
 }
@@ -667,7 +693,7 @@ void show_all_products(struct product products[], int n){
 }
 
 
-void show_basket(struct item_in_receipt basket[], int n){
+void show_basket(struct item_in_receipt basket[], int n, int coup, char* coupon){
 	int i, c = 0, bare_total = 0, disc_total = 0, total_disc_amount = 0;
 	//for (struct item_in_receipt x: basket)          //эх..
 	for (i = 0; i < n; i++)
@@ -696,10 +722,70 @@ void show_basket(struct item_in_receipt basket[], int n){
 	}
 	if (n > 0) {
 		printf("\n—”ћћ. —“ќ»ћќ—“№  Ѕ≈« — »ƒ »: %d  —ќ — »ƒ ќ…: %d     — »ƒ ј —ќ—“ј¬»“: %d  (–”Ѕ.)\n", bare_total, disc_total, total_disc_amount);
-		printf("* ¬ы получите скидку только после предъ€влени€ скидочного купона. \n¬ведите \"..\" или \".fin\", чтобы оплатить покупки.\n");
+		if (! coup)
+			printf("* ¬ы получите скидку только после предъ€влени€ скидочного купона. \n");
+		else
+			printf("¬аш купон на скидку: %s\n", coupon);
+		printf("\n¬ведите \"..\" или \".fin\", чтобы оплатить покупки.\n");
 	}
 	else
 		printf("* ¬ы ещЄ не отсканировали ни одного товара\n");
+}
+
+
+void Galya(char* inp, struct item_in_receipt receipt[], int n) {
+	struct item_in_receipt* product_ptr;
+	int all = 0, lw = 0;
+	if (is_last_word()) {
+		lw = 1;
+		if (n == 0) {
+			printf("¬ корзине и так нет покупок.\n");
+			return;
+		}
+		printf("¬ведите штрихкод продукта, который хотите убрать: ");
+	}
+	scan;
+	if (!lw && R("-all")) {
+		all = 1;
+		if (is_last_word()) {
+			if (n == 0) {
+				printf("¬ корзине и так нет покупок.\n");
+				return;
+			}
+			printf("¬ведите штрихкод продукта, который хотите убрать: ");
+		}
+		scan;
+	}
+	product_ptr = fast_search_in_receipt(receipt, n, inp);
+	if (product_ptr)
+		if (all) {
+			(product_ptr->count) = 0;
+			printf("ѕозици€ удалена\n");
+		}
+		else {
+			(product_ptr->count)--;
+			printf(" олличество данного товара уменьшино на 1\n");
+		}
+	else
+		printf("“овар с таким штрихкодом не найден в корзине.\n");
+}
+
+
+void Galina(char* inp, int* coup, struct item_in_receipt receipt[], int* n) {
+	if (*n == 0) {
+		*coup = 0;
+		printf("\nѕокупка отменена.\n");
+		return;
+	}
+	printf("¬ы добавили в корзину покупки. ƒождитесь сотрудника, чтобы он ввел\nпароль: ");
+	scan;
+	if (!(R(STFPASS))) {
+		printf("ѕароль неверный. „тобы отменить покупку введите команду еще раз.\n");
+		return;
+	}
+	*coup = 0;
+	*n = 0;
+	printf("\nѕокупка отменена\n");
 }
 
 
@@ -709,6 +795,10 @@ void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[],
 	char filename[FNL + 2];
 	errno_t err;
 	FILE* file = NULL;
+	if (*n == 0) {
+		printf("¬ы не добавили ни одного товара. ¬водите их штрихкоды дл€ добавлени€ в корзину.\n");
+		return;
+	}
 	if (! *coup) {
 		if (is_last_word()) {
 			printf("¬ведите номер своего купона (если у вас нет купона, просто нажмите Enter): ");
