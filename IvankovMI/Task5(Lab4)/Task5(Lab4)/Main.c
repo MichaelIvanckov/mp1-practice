@@ -376,20 +376,29 @@ errno_t free_the_table(struct product table[], int n) {
 
 FILE* make_n_open_file_for_receipt(char* name, int nl, char new_name[], int n) {
 	char buff[FNL + 2];     //т к "%d" - 2 символа будут заменены одним
-	int i, l, k = 1;
+	char fext_buff[FNL + 1], *extp;
+	int i, l, k = 1, extl;
 	FILE* file = NULL;
 	errno_t error = -1;
 	nl = min(nl, FNL);
 	l = min(strlen(name), nl);
 	strncpy_s(buff, sizeof(char) * (FNL + 2), name, l + 1);
 	buff[l] = '\0';
+	extp = buff + ((extl = find_filename_extension_lenth(buff)) - l);
 	if (_access(buff, 0) != 0)
 		error = fopen_s(&file, buff, "w");
 	else {
-		if (l < FNL - 3 && l < nl - 3)
+		strcpy_s(fext_buff, sizeof(char) * (FNL + 1), extp);
+		if (l < FNL - 3 - extl && l < nl - 3 - extl) {
+			*extp = '\0';
 			strcat_s(buff, sizeof(char) * (FNL + 2), "(%d)");
-		else
-			strcpy_s(buff + min(FNL, nl) - 3, sizeof(char) * (FNL + 2), "(%d)");
+			strcat_s(buff, sizeof(char) * (FNL + 2), fext_buff);
+		}
+		else {
+			strcpy_s(buff + min(FNL, nl) - 3 - extl, sizeof(char) * (FNL + 2), "(%d)");
+			*extp = '\0';
+			strcat_s(buff, sizeof(char) * (FNL + 2), fext_buff);
+		}
 		for (i = 0; i < n; i++) {
 			k++;
 			sprintf_s(buff, sizeof(char) * (FNL + 2), buff, i);
@@ -412,6 +421,18 @@ FILE* make_n_open_file_for_receipt(char* name, int nl, char new_name[], int n) {
 	}
 }
 
+
+int find_filename_extension_lenth(char* p) {
+	int i, res = 0, len = strlen(p);
+	char ch = p[0];
+	for (i = 0; ch; i++) {
+		if (ch == '.')
+			res = len - i;
+	}
+	return res;
+}
+
+
 void raise(const char* const message, int data1, int data2, int data3) {
 	error_msg.msg = message;
 	error_msg.data = data1;
@@ -420,9 +441,11 @@ void raise(const char* const message, int data1, int data2, int data3) {
 	error_flag = 1;
 }
 
+
 int is_interactive() {
 	return _isatty(_fileno(stdin));
 }
+
 
 void interactive_input(char* buffer, size_t size_of_buffer, size_t n) {
 	char  keys1[I_COUNT] = I_KEYS1;
@@ -471,14 +494,12 @@ void interactive_input(char* buffer, size_t size_of_buffer, size_t n) {
 }
 
 
-
 struct product* make_list_of_products(int n){
 	return (struct product*) malloc(sizeof(struct product) * n);
 }
 struct item_in_receipt* make_receipt(int n) {
 	return (struct item_in_receipt*)malloc(sizeof(struct item_in_receipt) * n);
 }
-
 
 
 int calc(int price, int discount){
