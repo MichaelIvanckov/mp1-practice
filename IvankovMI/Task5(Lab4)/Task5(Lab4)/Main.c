@@ -26,11 +26,13 @@
 #define FNL 50       //макс длина имени файла
 #define FTC 50       //макс колл-во попыток создать файл
 
+// Псевдонимы для команд в режиме горячих клавиш
 #define I_COUNT  13  
 #define I_KEYS1  {'c',       'i',     'h',     'x',               'g',            'G',             'f',    't',     'a',        'b',       's',     'e',         'd'         }
 #define I_KEYS2  {'C',       'I',     'H',     'X',               'g',            'G',             'F',    'T',     'A',        'B',       'S',     'E',         'D'         }
 #define I_WORDS  {".coupon", ".info", ".help", ".callthecashier", ".GalyaOtmena", ".GalinaOtmena", ".fin", ".test", ".showall", ".showmy", ".save", ".enablehk", ".disablehk"}
 
+// Для дебага
 #define DEBUG_RAW 39
 #define NOP 1;
 
@@ -69,7 +71,7 @@
 // показать текущую корзину
 
 //void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
-void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
+void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t, int *hk);
 void coupon(char* inp, int* coup, char coupon[]);                                  //+
 void info(char* inp, struct product products[], int n);                            //+
 //void help();                                                                     //+
@@ -123,6 +125,11 @@ char helpi[] = \
 *просто введённый штрихкод добавляет товар в корзину и выводит базовую информацию о нём \n\
 *\"касса\" обслуживает покупателей непрерывно: после завершения одной покупки начнется следующая\n\n";
 
+char helphk[] = \
+"Вы включили режим горячих клавиш. Обратите внимание, что в данном режименекоторые функции консоли могут быть не доступны.\n\
+Также могут быть проблемы с \"нестандартными\" способами ввода.\n\
+Cледующие клавии соответствуют следующим командам:\n"TO_STR(I_KEYS1)"\n"TO_STR(I_KEYS2)"\n"TO_STR(I_WORDS)"\n";
+
 char format[14];                         //строка формата для scanf_s вида "%Ns", где N - максимально разрешенная длина ввода
 
 #if NPR > 0
@@ -154,9 +161,10 @@ struct item_in_receipt {
 int main() {
 	//объявляем все локальные в main
 	FILE* list;
-	char inp[N + 1], error_output[ERL + 1], costil[1];       //inp2[N + 1]; //buff[N + 1];    //format[9];
+	char inp[N + 1], error_output[ERL + 1], costil[1];
 	char coupon_n[CPL + 1];
-	int n, coup = 0, l = 0, i = 0, hk = 0, new_word = 1;
+	int n,                    coup = 0,            l = 0,               i = 0,                                                           hk = 0,                        new_word = 1; 
+	//  длина базы продуктов, флаг наличия купона, длина текущего чека, флаг наличия консоли (возможность слушать клавишы для hot keys), флаг включенного режима hot keys
 	unsigned int clients = 0, total = 0;
 	errno_t  error, err2;
 	struct item_in_receipt* receipt;
@@ -256,7 +264,7 @@ int main() {
 	while (strcmp(inp, ".quit") != 0) {
 		
 		//choose(inp, inp2, &coup, coupon_n, receipt, &l, n, i, &clients, &total);
-		choose(inp, &coup, coupon_n, receipt, &l, n, i, &clients, &total);
+		choose(inp, &coup, coupon_n, receipt, &l, n, i, &clients, &total, &hk);
 		if (error_flag) {
 			printf("Ошибка обработки команды пользователя.\n");
 			sprintf_s(error_output, sizeof(char) * ERL, "Сообщение об ошибке: %s\n", error_msg.msg);
@@ -620,7 +628,7 @@ void set_discounts(struct product dst[], int n){
 
 
 //void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t)
-void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t) {
+void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t, int* hk) {
 	if (R(".help"))
 		printf(helpi);
 	else if (R(".callthecashier"))
@@ -641,6 +649,14 @@ void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receip
 		show_all_products(products, n);
 	else if (R(".showmy"))
 		show_basket(receipt, *l, *coup, coupon_n);
+	else if (R(".enablehk")) {
+		*hk = 1;
+		printf(helphk);
+	}
+	else if (R(".disablehk")) {
+		*hk = 0;
+		printf("Горячие клавиши отключены\n");
+	}
 	else
 		barcode(inp, products, receipt, l, n);
 }
@@ -770,7 +786,7 @@ void Galya(char* inp, struct item_in_receipt receipt[], int n) {
 		all = 1;
 		if (is_last_word()) {
 			if (n == 0) {
-				printf("В корзине и так нет покупок.\n");
+				printf("В корзине и так нет покупок. \n");
 				return;
 			}
 			printf("Введите штрихкод продукта, который хотите убрать: ");
