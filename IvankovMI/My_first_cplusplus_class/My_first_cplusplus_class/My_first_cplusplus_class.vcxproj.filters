@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.c">
+    <ClCompile Include="My_first_cplusplus_class.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>
