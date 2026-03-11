@@ -1,0 +1,170 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <errno.h>
+
+#define MAX_PATH 1024
+
+/* Структура для хранения информации о файле */
+typedef struct {
+    char name[MAX_PATH];   /* Имя файла */
+    off_t size;            /* Размер в байтах */
+    time_t mtime;          /* Время последней модификации */
+} FileInfo;
+
+/* Функция сравнения для сортировки по имени */
+int compare_by_name(const void *a, const void *b) {
+    const FileInfo *fa = (const FileInfo *)a;
+    const FileInfo *fb = (const FileInfo *)b;
+    return strcmp(fa->name, fb->name);
+}
+
+/* Функция сравнения для сортировки по размеру (по возрастанию) */
+int compare_by_size(const void *a, const void *b) {
+    const FileInfo *fa = (const FileInfo *)a;
+    const FileInfo *fb = (const FileInfo *)b;
+    if (fa->size < fb->size) return -1;
+    if (fa->size > fb->size) return 1;
+    return 0;
+}
+
+/* Функция сравнения для сортировки по дате модификации (от старых к новым) */
+int compare_by_date(const void *a, const void *b) {
+    const FileInfo *fa = (const FileInfo *)a;
+    const FileInfo *fb = (const FileInfo *)b;
+    if (fa->mtime < fb->mtime) return -1;
+    if (fa->mtime > fb->mtime) return 1;
+    return 0;
+}
+
+/* Вывод информации об одном файле */
+void print_file_info(const FileInfo *fi) {
+    char time_buf[64];
+    struct tm *tm_info = localtime(&fi->mtime);
+    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", tm_info);
+    printf("%-30s %10lld bytes  %s\n", fi->name, (long long)fi->size, time_buf);
+}
+
+int main() {
+    char dir_path[MAX_PATH];
+    int sort_method = 0;
+
+    /* Ввод пути к папке */
+    printf("Введите путь к папке: ");
+    if (fgets(dir_path, sizeof(dir_path), stdin) == NULL) {
+        fprintf(stderr, "Ошибка ввода пути.\n");
+        return 1;
+    }
+    /* Удаляем символ новой строки в конце */
+    size_t len = strlen(dir_path);
+    if (len > 0 && dir_path[len-1] == '\n') {
+        dir_path[len-1] = '\0';
+    }
+
+    /* Ввод метода сортировки */
+    printf("Выберите метод сортировки:\n");
+    printf("1 - по имени\n");
+    printf("2 - по размеру\n");
+    printf("3 - по дате модификации\n");
+    printf("Ваш выбор (1-3): ");
+    if (scanf("%d", &sort_method) != 1 || sort_method < 1 || sort_method > 3) {
+        fprintf(stderr, "Некорректный ввод метода сортировки.\n");
+        return 1;
+    }
+    /* Очищаем входной буфер после scanf */
+    while (getchar() != '\n');
+
+    /* Открываем каталог */
+    DIR *dir = opendir(dir_path);
+    if (dir == NULL) {
+        perror("Не удалось открыть каталог");
+        return 1;
+    }
+
+    /* Динамический массив для хранения информации о файлах */
+    FileInfo *files = NULL;
+    int file_count = 0;
+    int capacity = 0;
+
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        /* Пропускаем "." и ".." */
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        /* Формируем полный путь для stat */
+        char full_path[MAX_PATH * 2];
+        snprintf(full_path, sizeof(full_path), "%s/%s", dir_path, entry->d_name);
+
+        struct stat st;
+        if (stat(full_path, &st) != 0) {
+            fprintf(stderr, "Не удалось получить информацию о файле %s: %s\n", full_path, strerror(errno));
+            continue;
+        }
+
+        /* Проверяем, что это обычный файл (не директория) */
+        if (!S_ISREG(st.st_mode)) {
+            continue; /* пропускаем директории, симлинки и т.д. */
+        }
+
+        /* Увеличиваем массив при необходимости */
+        if (file_count >= capacity) {
+            capacity = capacity == 0 ? 8 : capacity * 2;
+            FileInfo *new_files = realloc(files, capacity * sizeof(FileInfo));
+            if (new_files == NULL) {
+                fprintf(stderr, "Ошибка выделения памяти.\n");
+                closedir(dir);
+                free(files);
+                return 1;
+            }
+            files = new_files;
+        }
+
+        /* Заполняем структуру */
+        strncpy(files[file_count].name, entry->d_name, MAX_PATH);
+        files[file_count].name[MAX_PATH - 1] = '\0'; /* гарантия завершения */
+        files[file_count].size = st.st_size;
+        files[file_count].mtime = st.st_mtime;
+        file_count++;
+    }
+
+    closedir(dir);
+
+    if (file_count == 0) {
+        printf("В указанной папке нет обычных файлов.\n");
+        free(files);
+        return 0;
+    }
+
+    /* Сортировка в соответствии с выбранным методом */
+    switch (sort_method) {
+        case 1:
+            qsort(files, file_count, sizeof(FileInfo), compare_by_name);
+            break;
+        case 2:
+            qsort(files, file_count, sizeof(FileInfo), compare_by_size);
+            break;
+        case 3:
+            qsort(files, file_count, sizeof(FileInfo), compare_by_date);
+            break;
+        default:
+            /* Не должно произойти */
+            break;
+    }
+
+    /* Вывод результатов */
+    printf("\nСписок файлов (отсортирован):\n");
+    printf("%-30s %12s  %s\n", "Имя", "Размер", "Дата изменения");
+    for (int i = 0; i < file_count; i++) {
+        print_file_info(&files[i]);
+    }
+
+    /* Освобождение памяти */
+    free(files);
+    return 0;
+}
