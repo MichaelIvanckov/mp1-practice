@@ -32,10 +32,6 @@
 #define I_KEYS2  {'C',       'I',     'H',     'X',               'g',            'G',             'F',    'T',     'A',        'B',       'S',     'E',         'D'         }
 #define I_WORDS  {".coupon", ".info", ".help", ".callthecashier", ".GalyaOtmena", ".GalinaOtmena", ".fin", ".test", ".showall", ".showmy", ".save", ".enablehk", ".disablehk"}
 
-// Для дебага
-#define DEBUG_RAW 39
-#define NOP 1;
-
 #define IS_DIGIT(i) (i == '0' || i == '1' || i == '2' || i == '3' || i == '4' || i == '5' || i == '6' || i == '7' || i == '8' || i == '9')
 
 #define CONCAT(a, b) a##b
@@ -51,8 +47,8 @@
 #define ISCOMMAND (strcmp(inp[0], ".") == 0)
 #define ISCOM ISCOMMAND 
 #define ISLW is_last_word()
-#define iscan interactive_input(inp, sizeof(char) * (N + 1), N)
-#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * (N + 1));} //УРААААА!!! РАБОТАЕТ!!!! ВВОД ПОчИНИЛИ!!!
+#define iscan {interactive_input(inp, sizeof(char) * (N + 1), N); there_was_checking_new_line_flag = 1;}
+#define scan {printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * (N + 1)); there_was_checking_new_line_flag = 1;} //УРААААА!!! РАБОТАЕТ!!!! ВВОД ПОчИНИЛИ!!!
 #define scan_t scanf_s(format, inp, sizeof(char) * N)
 #define B117 "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
 
@@ -70,14 +66,14 @@
 // показать все товары
 // показать текущую корзину
 
-//void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t);
+
 void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t, int *hk);
 void coupon(char* inp, int* coup, char coupon[]);                                  //+
 void info(char* inp, struct product products[], int n);                            //+
 //void help();                                                                     //+
 //void callthecashier();                                                           //+
-void Galya(char* inp, struct item_in_receipt receipt[], int n);                    // отмена поз.
-void Galina(char* inp, int* coup, struct item_in_receipt receipt[], int* n);       // отмена покупки
+void Galya(char* inp, struct item_in_receipt receipt[], int n);                    //+ отмена поз.
+void Galina(char* inp, int* coup, struct item_in_receipt receipt[], int* n);       //+ отмена покупки
 void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[], int* n, int interactive, int* cli, int* tot);  //+
 void barcode(char* inp, struct product products[], struct item_in_receipt receipt[], int* l, int n);  //+
 void test(char* inp);                                                             //+
@@ -103,8 +99,9 @@ int is_interactive();
 void interactive_input(char* buffer, size_t size_of_buffer, size_t n);
 
 
-struct { char* msg; int data; int data2; int data3; } error_msg;   //указатель на сообщение об ошибке
+struct { char* msg; int data; int data2; int data3; } error_msg;   //структура с указателем на сообщение об ошибке
 int error_flag = 0;                                               //флаг, поднимаемый ситуативно вызываемыми функциями в случае ошибки
+int there_was_checking_new_line_flag = 0;                        //флаг, поднимаемый ф-ей is_last_word() и опускаемый макросоми scan и iscan
 
 char helpi[] = \
 "Вводите ниже цифры \"отсканированных штрихкодов\" и специальные команды, а программа \n\
@@ -189,7 +186,6 @@ int main() {
 	else if (HK) {
 		printf("Для включения горячих клавиш введите что-нибудь (иначе просто нажмите Enter):\n  *при включенных горячих клавишах при наборе первого символа не работают специальные клавиши, такие как стрелки и F11\b"B117);
 		if (!is_last_word()) {
-			//fgets(costil, sizeof(char), stdin);
 			eat_the_line();
 			printf("**  режим горячих клавишь включен  **\n\n");
 			hk = 1;
@@ -257,13 +253,11 @@ int main() {
 
 	//if (hk & new_word) { 
 	if (hk) {
-		//fgets(costil, sizeof(char), stdin); 
 		iscan; 
 	}
 	else scan;
 	while (strcmp(inp, ".quit") != 0) {
 		
-		//choose(inp, inp2, &coup, coupon_n, receipt, &l, n, i, &clients, &total);
 		choose(inp, &coup, coupon_n, receipt, &l, n, i, &clients, &total, &hk);
 		if (error_flag) {
 			printf("Ошибка обработки команды пользователя.\n");
@@ -271,10 +265,8 @@ int main() {
 			printf(error_output, error_msg.data);
 			return 0;
 		}
-		//new_word = is_last_word();
 		printf("\n");
-		//if (hk & new_word) iscan;
-		if (hk) iscan;
+		if (hk) iscan
 		else scan;
 
 	}
@@ -285,16 +277,22 @@ int main() {
 }
 
 
-int is_last_word() {            //странная, конечно, реализация. но зато простая, как топор
-	char c = fgetc(stdin);
+int is_last_word() {
+	char c;
+	there_was_checking_new_line_flag = 1;
+	//if (there_was_checking_new_line_flag)   <-  надо это реализовать как-то
+	//	return 1;
+	c = fgetc(stdin);
 	while (c == ' ') {
 		c = fgetc(stdin); 
 	}
 	if (c == '\n' || c == EOF) {
+		//there_was_checking_new_line_flag = 1;
 		return 1;
 	}
 	else {
 		ungetc(c, stdin);
+		//there_was_checking_new_line_flag = 0;
 		return 0;
 	}
 }
@@ -392,7 +390,7 @@ FILE* make_n_open_file_for_receipt(char* name, int nl, char new_name[], int n) {
 	l = min(strlen(name), nl);
 	strncpy_s(buff, sizeof(char) * (FNL + 2), name, l + 1);
 	buff[l] = '\0';
-	extp = buff + ((extl = find_filename_extension_lenth(buff)) - l);
+	extp = buff + (l - (extl = find_filename_extension_lenth(buff)));
 	if (_access(buff, 0) != 0)
 		error = fopen_s(&file, buff, "w");
 	else {
@@ -407,7 +405,7 @@ FILE* make_n_open_file_for_receipt(char* name, int nl, char new_name[], int n) {
 			*extp = '\0';
 			strcat_s(buff, sizeof(char) * (FNL + 2), fext_buff);
 		}
-		for (i = 0; i < n; i++) {
+		for (i = 1; i < n; i++) {
 			k++;
 			sprintf_s(buff, sizeof(char) * (FNL + 2), buff, i);
 			if (_access(buff, 0) != 0) {
@@ -434,6 +432,7 @@ int find_filename_extension_lenth(char* p) {
 	int i, res = 0, len = strlen(p);
 	char ch = p[0];
 	for (i = 0; ch; i++) {
+		ch = p[i];
 		if (ch == '.')
 			res = len - i;
 	}
@@ -533,8 +532,6 @@ errno_t fill_the_table(FILE* src, struct product dst[], int n){
 	for (i = 0; i < n; i++) {
 		char* t = (char*)(1),* context = NULL;
 		int k = 0;
-		//if (i == DEBUG_RAW)
-		//	NOP;
 		error = fscanf_s(src, BCformat, dst[i].number, (unsigned int)(sizeof(char) * (BCL + 1)));
 		if (error == 0 || error == EOF) {
 			error_msg.msg = (error == 0) ? "Не удалось прочитать штрихкод в %d строке." : "Достигнут конец файла в %d строке.";
@@ -589,14 +586,6 @@ errno_t fill_the_table(FILE* src, struct product dst[], int n){
 			dst[i].name[l - 1] = '\0';
 		}
 		else {
-			//char* second_word,* context_ = NULL;
-			//second_word = (strtok_s(buffer_copy, " \t\n", &context_), strtok_s(NULL, " \t\n", &context_));
-			//if (second_word == NULL) {
-			//	error_msg.msg = "Что-то пошло не так с заполнением имени продукта в %d строке.";
-			//	error_msg.data = i;
-			//	return (errno_t)(6);
-			//}
-			//error = (int)strncat_s(start, (size_t)(PNL + 1) - strlen(start), second_word, (size_t)(PNL)-strlen(start));
 			start = point_to_the_first_nonspace(buffer_copy, PNL);
 			if (start == NULL) {
 				error_msg.msg = "При записи имени продукта в %d строке что-то пошло не так.";
@@ -606,7 +595,6 @@ errno_t fill_the_table(FILE* src, struct product dst[], int n){
 			error = (int)strncpy_s(dst[i].name, size, start, (size_t)(l - 1));
 			dst[i].name[l - 1] = '\0';
 		}
-		//strncpy_s(dst[i].name, sizeof(char) * ((size_t)(l)), buffer_copy, (size_t)(l - 1));
 		if (error != 0) {
 			error_msg.msg = "При записи имени продукта в %d строке что-то другое пошло не так.";
 			error_msg.data = i;
@@ -627,7 +615,6 @@ void set_discounts(struct product dst[], int n){
 }
 
 
-//void choose(char* inp, char* inp2, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t)
 void choose(char* inp, int* coup, char coupon_n[], struct item_in_receipt receipt[], int* l, int n, int i, int* cl, int* t, int* hk) {
 	if (R(".help"))
 		printf(helpi);
@@ -695,7 +682,6 @@ void barcode(char* inp, struct product products[], struct item_in_receipt receip
 	if (product_ptr != NULL) {
 		pos_in_rec = fast_search_in_receipt(receipt, *l, inp);
 		if (pos_in_rec == NULL) {
-			//receipt[*l] = struct item_in_receipt { product_ptr, 1, *l};   //поч не работает?
 			receipt[*l].item = product_ptr;
 			receipt[*l].count = 1;
 			receipt[*l].position = *l;
@@ -874,7 +860,6 @@ void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[],
 		disc_total += disc_cost;
 		total_disc_amount += disс_amount;
 	}
-	//printf("\nСУММ. СТОИМОСТЬ  БЕЗ СКИДКИ: %d", bare_total);
 	printf("\nСУММ. СТОИМОСТЬ ");
 	if (*coup)
 		printf(" ");
@@ -918,28 +903,7 @@ void final(char* inp, int* coup, char coupon[], struct item_in_receipt basket[],
 		raise("Не удалось распечатать чек (код ошибки: %d)", err, 0, 0);
 	printf("\n\nЕсли хотите сохранить чек в текстовом файле");
 	if (interactive) {
-		printf(" нажмите клавишу [S] или введите \".save\"\n");
-		/*if ((inpch = _getch()) == 's' || inpch == 'S') {
-			file = make_n_open_file_for_receipt(DST_FILE, FNL, filename, FTC);
-			if (file != NULL) {
-				err = make_the_receipt(file, basket, *n, *coup);
-				if (err != 0)
-					raise("Не удалось распечатать чек (код ошибки: %d)", err, 0, 0);
-				err = fclose(file);
-				if (err == 0)
-					printf("\n\nФайл успешо сохранен (название: %s)\n", filename);
-				else
-					printf("\n\nВозникли ошибки при сохранении (закрытии) файла\n");
-			}
-			else
-				printf("Не удалось создать файл для чека");
-		}
-		else {
-			//ungetc('\n', stdin);
-			printf("%c", inpch);
-			ungetc(inpch, stdin);
-			{ printf("--------\b\b\b\b\b\b\b\b"); scanf_s(format, inp, sizeof(char) * 1000); };
-		}*/
+		printf(" нажмите клавишу [S] или введите \".save\"\n\n");
 		iscan;
 	}
 	else {
