@@ -280,19 +280,15 @@ int main() {
 int is_last_word() {
 	char c;
 	there_was_checking_new_line_flag = 1;
-	//if (there_was_checking_new_line_flag)   <-  надо это реализовать как-то
-	//	return 1;
 	c = fgetc(stdin);
 	while (c == ' ') {
 		c = fgetc(stdin); 
 	}
 	if (c == '\n' || c == EOF) {
-		//there_was_checking_new_line_flag = 1;
 		return 1;
 	}
 	else {
 		ungetc(c, stdin);
-		//there_was_checking_new_line_flag = 0;
 		return 0;
 	}
 }
@@ -460,7 +456,7 @@ void interactive_input(char* buffer, size_t size_of_buffer, size_t n) {
 	char* words[I_COUNT] = I_WORDS;
 	char inpch, sec;
 	int i, t, а_надо;
-	а_надо = is_last_word();
+	а_надо = there_was_checking_new_line_flag || is_last_word();
 	if (!а_надо) {
 		scanf_s(format, buffer, size_of_buffer);
 		return;
