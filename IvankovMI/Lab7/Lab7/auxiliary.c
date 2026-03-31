@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -10,7 +11,12 @@
 
 // ссылки на все открытые файлы для мягкого закрытия при аварийном выходе
 FILE* opend_resources[MAX_FILES];
+
+// информация о закрытых файлах для избежания овторного закрытия
 bool closed_resources[MAX_FILES];
+
+// имена открытых файлов для вывода сообщения об ошибке
+char* file_names[MAX_FILES];
 
 
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
@@ -153,6 +159,30 @@ static int s_to_year(char* s) {
 
 void soft_exit() {
 	for (int i = 0; i < MAX_FILES; i++)
-		fclose(opend_resources[i]);
+		soft_i_fclose(i);
 	exit(EXIT_FAILURE);
+}
+
+
+// сравнение указателей на файл для мягкого закрытия (может быть не стабильно)
+static bool file_cmp(FILE* one, FILE* another) {
+	return (bool)(one->_Placeholder == another->_Placeholder);
+}
+
+
+void soft_fclose(FILE* file) {
+	for (int i = 0; i < MAX_FILES; i++)
+		if (file_cmp(file, opend_resources[i]))
+			soft_i_fclose(i);
+}
+
+
+static void soft_i_fclose(int i) {
+	if (!closed_resources[i]) {
+		closed_resources[i] = true;
+		if (fclose(opend_resources[i]) != 0) {
+			perror("Не удалось закрыть файл");
+			soft_exit();
+		}
+	}
 }
