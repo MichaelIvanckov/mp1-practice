@@ -1,3 +1,5 @@
+//./src/auxiliary.c
+
 #include <stddef.h>
 #include <stdio.h>
 #include <errno.h>
@@ -6,25 +8,28 @@
 #include <stdbool.h>
 
 #include "library.h"
+#include "auxiliary_soft_exit.h"
 #include "auxiliary.h"
 
 
-// ссылки на все открытые файлы для мягкого закрытия при аварийном выходе
-FILE* opend_resources[MAX_FILES];
+// Функции, опредленные здесь (в т. ч. статические, для устраения ошибок компиляци):
 
-// информация о закрытых файлах для избежания овторного закрытия
-bool closed_resources[MAX_FILES];
+int fill_library(FILE* src_file, book* lib);
+book fill_book(char* src);
 
-// имена открытых файлов для вывода сообщения об ошибке
-char* file_names[MAX_FILES];
+static char* read_line(FILE* f, size_t start_size);
+static char* pretty_format(char* str);
+static bool check_valid_symb(char symb, const char* forbidden, size_t n);
+static void trim_spaces(char* str);
+static int s_to_year(char* s);
 
 
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 int fill_library(FILE* src_file, book* lib) {
 	char* str = (char*)malloc(sizeof(char) * (N + 1));
-	char* err = 1;
+	char* err = 1; // чтобы прошел проверку ниже
 	int i = 0;
-	while (err != NULL) {  // поменять
+	while (err != NULL) {
 		err = fgets(str, N, src_file);
 		lib[i++] = fill_book(str);
 	}
@@ -35,7 +40,8 @@ int fill_library(FILE* src_file, book* lib) {
 // создает структуру book на основе однострочного представления
 book fill_book(char* src) {
 	char* context = NULL;
-	char* info[4] = { strtok_s(src, ";", &context),
+	char* info[4] = { 
+		strtok_s(src, ";", &context),
 		strtok_s(NULL, ";", &context),
 		strtok_s(NULL, ";", &context) };
 	int i;
@@ -81,7 +87,8 @@ static char* read_line(FILE* f, size_t start_size) {
 }
 
 
-// убирает пробелы, табуляцию и кавчки из начала и конца строки, убирает двойные пробелы между словами
+// убирает пробелы, табуляцию и кавчки из начала и конца строки, убирает двойные пробелы между словами,
+// возвращает указатель на подстроку, начинающуюся с первого разрешенного символа
 static char* pretty_format(char* str) {
 	char* start = str;
 	size_t len = strlen(str);
@@ -111,7 +118,7 @@ static char* pretty_format(char* str) {
 
 // проверяет, не является ли символ запрещенным
 static bool check_valid_symb(char symb, const char* forbidden, size_t n) {
-	for (int i; i < n; i++)
+	for (int i = 0; i < n; i++)
 		if (symb == forbidden[i])
 			return false;
 	return true;
@@ -154,35 +161,4 @@ static int s_to_year(char* s) {
 		exit(EXIT_FAILURE);
 	}
 	return res;
-}
-
-
-void soft_exit() {
-	for (int i = 0; i < MAX_FILES; i++)
-		soft_i_fclose(i);
-	exit(EXIT_FAILURE);
-}
-
-
-// сравнение указателей на файл для мягкого закрытия (может быть не стабильно)
-static bool file_cmp(FILE* one, FILE* another) {
-	return (bool)(one->_Placeholder == another->_Placeholder);
-}
-
-
-void soft_fclose(FILE* file) {
-	for (int i = 0; i < MAX_FILES; i++)
-		if (file_cmp(file, opend_resources[i]))
-			soft_i_fclose(i);
-}
-
-
-static void soft_i_fclose(int i) {
-	if (!closed_resources[i]) {
-		closed_resources[i] = true;
-		if (fclose(opend_resources[i]) != 0) {
-			perror("Не удалось закрыть файл");
-			soft_exit();
-		}
-	}
 }

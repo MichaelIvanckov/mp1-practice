@@ -1,7 +1,15 @@
+//./src/library.h
+
 #pragma once
 
+#include <stddef.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+
+
 // структура представления книги
-struct book {
+struct book_ {
 	char* authors;  // авторы
 	char* name;     // название
 	char* publ;     // издательство
@@ -9,6 +17,6 @@ struct book {
 	char* str;      // указатель на строку с исходной информацией о книге для очистки памяти
 };
 
-typedef struct book book; // структура представления книги
+typedef struct book_ book; // структура представления книги
 
 extern book* library;

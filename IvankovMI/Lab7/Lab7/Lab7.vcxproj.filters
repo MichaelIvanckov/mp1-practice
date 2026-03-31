@@ -24,12 +24,21 @@
     <ClCompile Include="auxiliary.c">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
+    <ClCompile Include="auxiliary_soft_exit.c">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="auxiliary.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
     <ClInclude Include="library.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="auxiliary_soft_exit.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
+    <ClInclude Include="costil.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
   </ItemGroup>
