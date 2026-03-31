@@ -11,9 +11,9 @@
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 int fill_library(FILE* src_file, book* lib) {
 	char* str = (char*)malloc(sizeof(char) * (N + 1));
-	int err = 0;
+	char* err = 1;
 	int i = 0;
-	while (err != 0) {  // поменять
+	while (err != NULL) {  // поменять
 		err = fgets(str, N, src_file);
 		lib[i++] = fill_book(str);
 	}
@@ -49,7 +49,9 @@ static char* pretty_format(char* str) {
 	}
 	// ставим терминатор после последнего разрешенного символа
 	for (i = len - 1; i >= 0; i--) {
-		if (check_valid_symb(str[i], FORBIDDEN_SYMBS, lenof(FORBIDDEN_SYMBS, char))) {
+		if (check_valid_symb(str[i], 
+							 FORBIDDEN_SYMBS"\n\t",     // так как в конце также убираем новую строку
+							 lenof(FORBIDDEN_SYMBS, char) + 2)) {
 			str[++i] = '\0';
 			break;
 		}
