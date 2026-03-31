@@ -27,7 +27,7 @@ static int s_to_year(char* s);
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 int fill_library(FILE* src_file, book* lib) {
 	char* str = (char*)malloc(sizeof(char) * (N + 1));
-	char* err = 1; // чтобы прошел проверку ниже
+	char* err = (char*)1; // чтобы прошел проверку ниже
 	int i = 0;
 	while (err != NULL) {
 		err = fgets(str, N, src_file);
@@ -43,7 +43,8 @@ book fill_book(char* src) {
 	char* info[4] = { 
 		strtok_s(src, ";", &context),
 		strtok_s(NULL, ";", &context),
-		strtok_s(NULL, ";", &context) };
+		strtok_s(NULL, ";", &context),
+		NULL};  // может, где пригодится
 	int i;
 	for (i = 0; i < 4; i++)
 		info[i] = pretty_format(info[i]);
@@ -90,6 +91,7 @@ static char* read_line(FILE* f, size_t start_size) {
 // убирает пробелы, табуляцию и кавчки из начала и конца строки, убирает двойные пробелы между словами,
 // возвращает указатель на подстроку, начинающуюся с первого разрешенного символа
 static char* pretty_format(char* str) {
+	if (str == NULL) return NULL;
 	char* start = str;
 	size_t len = strlen(str);
 	int i;
@@ -158,7 +160,7 @@ static int s_to_year(char* s) {
 	int res = atoi(s);
 	if (res <= 0) {
 		perror("Ошибка чтения информации о книгах: год должен быть положительным числом");
-		exit(EXIT_FAILURE);
+		soft_exit();
 	}
 	return res;
 }
