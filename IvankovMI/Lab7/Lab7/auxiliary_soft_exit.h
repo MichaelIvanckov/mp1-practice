@@ -15,5 +15,9 @@ void soft_exit();
 // безопасное завершение программы с освобождением всех ресурсов с заданным кодом выхода
 void soft_exit_no(errno_t errcode);
 
+// безопасное кроссплатформенное открытие файла, позволяющее потом его безопасно закрыть
+// через soft_fclose или soft_exit/soft_exit_no
+FILE* save_fopen(const char* filename, const char* mode);
+
 // безопасное закрытие файла, исключающее повторное закрытие
 void soft_fclose(FILE* file);

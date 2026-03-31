@@ -29,6 +29,7 @@ static unsigned files_counter = 0;
 
 void soft_exit();
 void soft_exit_no(errno_t errcode);
+FILE* save_fopen(const char* filename, const char* mode);
 void soft_fclose(FILE* file);
 
 static bool file_cmp(FILE* one, FILE* another);
@@ -46,6 +47,35 @@ void soft_exit_no(errno_t errcode) {
 	for (int i = 0; i < files_counter; i++)
 		soft_i_fclose(i);
 	exit(errcode);
+}
+
+
+// безопасное кроссплатформенное открытие файла, позволяющее потом его безопасно закрыть
+// через soft_fclose или soft_exit/soft_exit_no
+FILE* save_fopen(const char* filename, const char* mode) {
+	FILE* file = NULL;
+	errno_t err = 0;
+	if (files_counter + 1 >= MAX_FILES) {
+		perror("Превышен лимит открытых файлов");
+		soft_exit();
+	}
+#if defined(_WIN32) && defined(_MSC_VER)
+	err = fopen_s(&file, filename, mode);
+#else
+	file = fopen(filename, mode);
+#endif
+	if (file == NULL || err != 0) {
+		perror("Не удалось открыть файл");
+#if defined(_WIN32) && defined(_MSC_VER)
+		soft_exit_no(err);
+#else
+		soft_exit();
+#endif
+	}
+	files_counter++;
+	opend_resources[files_counter] = file;
+	closed_resources[files_counter] = false;
+	return file;
 }
 
 
