@@ -8,6 +8,11 @@
 #include "auxiliary.h"
 
 
+// ссылки на все открытые файлы для мягкого закрытия при аварийном выходе
+FILE* opend_resources[MAX_FILES];
+bool closed_resources[MAX_FILES];
+
+
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 int fill_library(FILE* src_file, book* lib) {
 	char* str = (char*)malloc(sizeof(char) * (N + 1));
@@ -35,6 +40,41 @@ book fill_book(char* src) {
 }
 
 
+// Чтение одной строки из файла с реаллокацией в больший буфер (возвращает указатель на выделенный буфер)
+static char* read_line(FILE* f, size_t start_size) {
+	size_t size = start_size;      // начальный размер буфера
+	char* buffer = malloc(size);
+	if (!buffer) {
+		perror("malloc");
+		return NULL;
+	}
+
+	size_t pos = 0;
+	int ch;
+	while ((ch = fgetc(f)) != EOF && ch != '\n') {
+		buffer[pos++] = (char)ch;
+		if (pos == size) {
+			size *= 2;
+			char* new_buf = realloc(buffer, size);
+			if (!new_buf) {
+				free(buffer);
+				return NULL;
+			}
+			buffer = new_buf;
+		}
+	}
+
+	// Если ничего не прочитано и достигнут EOF, возвращаем NULL
+	if (pos == 0 && ch == EOF) {
+		free(buffer);
+		return NULL;
+	}
+
+	buffer[pos] = '\0';     // завершающий нуль
+	return buffer;
+}
+
+
 // убирает пробелы, табуляцию и кавчки из начала и конца строки, убирает двойные пробелы между словами
 static char* pretty_format(char* str) {
 	char* start = str;
@@ -50,7 +90,7 @@ static char* pretty_format(char* str) {
 	// ставим терминатор после последнего разрешенного символа
 	for (i = len - 1; i >= 0; i--) {
 		if (check_valid_symb(str[i], 
-							 FORBIDDEN_SYMBS"\n\t",     // так как в конце также убираем новую строку
+							 FORBIDDEN_SYMBS"\r\n",     // так как в конце также убираем новую строку
 							 lenof(FORBIDDEN_SYMBS, char) + 2)) {
 			str[++i] = '\0';
 			break;
@@ -105,7 +145,14 @@ static int s_to_year(char* s) {
 	int res = atoi(s);
 	if (res <= 0) {
 		perror("Ошибка чтения информации о книгах: год должен быть положительным числом");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	return res;
+}
+
+
+void soft_exit() {
+	for (int i = 0; i < MAX_FILES; i++)
+		fclose(opend_resources[i]);
+	exit(EXIT_FAILURE);
 }
