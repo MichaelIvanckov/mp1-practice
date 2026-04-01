@@ -44,7 +44,8 @@ book fill_book(char* src) {
 		strtok_s(src, ";", &context),
 		strtok_s(NULL, ";", &context),
 		strtok_s(NULL, ";", &context),
-		NULL};  // может, где пригодится
+		strtok_s(NULL, ";", &context)
+	};
 	int i;
 	for (i = 0; i < 4; i++)
 		info[i] = pretty_format(info[i]);
@@ -56,10 +57,16 @@ book fill_book(char* src) {
 // Чтение одной строки из файла с реаллокацией в больший буфер (возвращает указатель на выделенный буфер)
 static char* read_line(FILE* f, size_t start_size) {
 	size_t size = start_size;      // начальный размер буфера
+	if (f == NULL) {
+		perror("Невозможно читать файл по нулевому указателю");
+		soft_exit();
+		return NULL;  // return избыточен, так как программа все равно завершается, он для тупого стат. анализатора
+	}
 	char* buffer = malloc(size);
 	if (!buffer) {
-		perror("malloc");
-		return NULL;
+		perror("При чтении строки не удалось выделить память (malloc)");
+		soft_exit();
+		return NULL; // аналогично
 	}
 
 	size_t pos = 0;
@@ -70,20 +77,22 @@ static char* read_line(FILE* f, size_t start_size) {
 			size *= 2;
 			char* new_buf = realloc(buffer, size);
 			if (!new_buf) {
-				free(buffer);
+				perror("При чтении строки не удалось произвести реаллокацию (realloc)");
+				free(buffer);  // если new_buf = NULL (произошла ошибка), старую память надо освободить
+				soft_exit();
 				return NULL;
 			}
 			buffer = new_buf;
 		}
 	}
 
-	// Если ничего не прочитано и достигнут EOF, возвращаем NULL
+	// Если ничего не прочитано и достигнут EOF, возвращаем NULL (это не ошибка, просто файл зкончиля)
 	if (pos == 0 && ch == EOF) {
 		free(buffer);
 		return NULL;
 	}
 
-	buffer[pos] = '\0';     // завершающий нуль
+	buffer[pos] = '\0';     // завершающий нуль-терминатор
 	return buffer;
 }
 
@@ -103,7 +112,7 @@ static char* pretty_format(char* str) {
 			break;
 	}
 	// ставим терминатор после последнего разрешенного символа
-	for (i = len - 1; i >= 0; i--) {
+	for (i = len - 1; i >= start; i--) {
 		if (check_valid_symb(str[i], 
 							 FORBIDDEN_SYMBS"\r\n",     // так как в конце также убираем новую строку
 							 lenof(FORBIDDEN_SYMBS, char) + 2)) {
@@ -111,6 +120,8 @@ static char* pretty_format(char* str) {
 			break;
 		}
 	}
+	if (i == start)
+		return NULL;  // возвращаем NULL, если строка опустела после срезания концов
 	// удаляем лишние пробелы между словами
 	trim_spaces(str);
 	// возвращаем указатель на первый нужный символ
