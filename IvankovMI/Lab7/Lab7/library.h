@@ -17,6 +17,16 @@ struct book_ {
 	char* str;      // указатель на строку с исходной информацией о книге для очистки памяти
 };
 
-typedef struct book_ book; // структура представления книги
+struct library_s { // структура представления библиотеки
+	book* list;
+	size_t lenth;
+	size_t size;
+};
 
-extern book* library;
+typedef struct book_ book; // структура представления книги
+typedef struct library_s library_t; // структура представления библиотеки
+
+extern book* library_;
+extern size_t lib_size;
+
+extern library_t library;

@@ -24,15 +24,31 @@ static void trim_spaces(char* str);
 static int s_to_year(char* s);
 
 
-// считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
-int fill_library(FILE* src_file, book* lib) {
-	char* str = (char*)malloc(sizeof(char) * (N + 1));
-	char* err = (char*)1; // чтобы прошел проверку ниже
-	int i = 0;
-	while (err != NULL) {
-		err = fgets(str, N, src_file);
-		lib[i++] = fill_book(str);
+// Создание бибилиотеки, выделение памяти
+void create_library(book* lib, size_t* lib_s, size_t start_size) {
+	*lib_s = start_size;          // начальнаый размер
+	lib = (book*)malloc(start_size * sizeof(book*));
+	if (lib) {
+		perror("Не удалось выделить память при созданиии бибилиотеки (malloc)");
+		soft_exit();
 	}
+}
+
+
+// считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
+// релоцирует library, если колл-во книг больше, чем ожидаемое
+int fill_library(FILE* src_file, book** lib, size_t* lib_s) {
+	char* str = NULL;
+	bool valid = true;
+	int i = 0;
+	str = read_line(src_file, sizeof(char) * (N + 1), &valid);
+	while (str != NULL && valid) {
+		if (i++ > *lib_s); // дод
+		(*lib)[i] = fill_book(str);
+		str = read_line(src_file, sizeof(char) * (N + 1), &valid);
+	}
+	if (lib_s)
+		*lib_s = i;
 	return i;
 }
 
@@ -55,7 +71,8 @@ book fill_book(char* src) {
 
 
 // Чтение одной строки из файла с реаллокацией в больший буфер (возвращает указатель на выделенный буфер)
-static char* read_line(FILE* f, size_t start_size) {
+// изменет параметр valid на false, если строка пустая
+static char* read_line(FILE* f, size_t start_size, bool* valid) {
 	size_t size = start_size;      // начальный размер буфера
 	if (f == NULL) {
 		perror("Невозможно читать файл по нулевому указателю");
@@ -71,6 +88,7 @@ static char* read_line(FILE* f, size_t start_size) {
 
 	size_t pos = 0;
 	int ch;
+	*valid = true;
 	while ((ch = fgetc(f)) != EOF && ch != '\n') {
 		buffer[pos++] = (char)ch;
 		if (pos == size) {
@@ -86,10 +104,14 @@ static char* read_line(FILE* f, size_t start_size) {
 		}
 	}
 
-	// Если ничего не прочитано и достигнут EOF, возвращаем NULL (это не ошибка, просто файл зкончиля)
-	if (pos == 0 && ch == EOF) {
-		free(buffer);
-		return NULL;
+	// Если ничего не прочитано ставим valid в false
+	if (pos == 0) {
+		*valid = false;
+		// Если ничего не прочитано и достигнут EOF, возвращаем NULL (это не ошибка, просто файл зкончиля)
+		if (pos == 0 && ch == EOF) {
+			free(buffer);
+			return NULL;
+		}
 	}
 
 	buffer[pos] = '\0';     // завершающий нуль-терминатор

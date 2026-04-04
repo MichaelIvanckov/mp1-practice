@@ -19,6 +19,9 @@
 
 // шаблон сообщения коммита: "Иванков М. И. - Lab7 - библиотека - ..."
 
+// Создание бибилиотеки, выделение памяти
+void create_library(book* lib, size_t* lib_s, size_t start_size);
+
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 int fill_library(FILE* src_file, book* lib);
 
