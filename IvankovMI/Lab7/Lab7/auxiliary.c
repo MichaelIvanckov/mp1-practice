@@ -14,7 +14,8 @@
 
 // Функции, опредленные здесь (в т. ч. статические, для устраения ошибок компиляци):
 
-int fill_library(FILE* src_file, book* lib);
+void create_library(book* lib, size_t* lib_s, size_t start_size);
+int fill_library(FILE* src_file, book** lib, size_t* lib_s);
 book fill_book(char* src);
 
 static char* read_line(FILE* f, size_t start_size);
@@ -37,18 +38,26 @@ void create_library(book* lib, size_t* lib_s, size_t start_size) {
 
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 // релоцирует library, если колл-во книг больше, чем ожидаемое
+// возвращает колличество добавленных книг
 int fill_library(FILE* src_file, book** lib, size_t* lib_s) {
 	char* str = NULL;
 	bool valid = true;
 	int i = 0;
 	str = read_line(src_file, sizeof(char) * (N + 1), &valid);
-	while (str != NULL && valid) {
-		if (i++ > *lib_s); // дод
+	while (str != NULL) {
+		if (valid) {  // если прочитанная строка пустая, пропускаем
+			if (i++ > *lib_s) {  // релоцируем библиотеку в случае переполнения
+				book* new_lib = realloc(*lib, *lib_s * sizeof(book*));
+				if (!new_lib) {
+					perror("Не удалось релоцировать библиотеку при чтении файла (realloc)");
+					soft_exit();
+				}
+				*lib = new_lib;
+			}
 		(*lib)[i] = fill_book(str);
+		}
 		str = read_line(src_file, sizeof(char) * (N + 1), &valid);
 	}
-	if (lib_s)
-		*lib_s = i;
 	return i;
 }
 
@@ -63,8 +72,13 @@ book fill_book(char* src) {
 		strtok_s(NULL, ";", &context)
 	};
 	int i;
-	for (i = 0; i < 4; i++)
-		info[i] = pretty_format(info[i]);
+	for (i = 0; i < 4; i++) {
+		char* str = pretty_format(info[i]);
+		if (!str) {
+			perror("Ошибка при чтении информации о книге: одно из полей пустое");
+			soft_exit();
+		}
+	}
 	book res = { info[0], info[1], info[2], s_to_year(info[3]), src };
 	return res;
 }

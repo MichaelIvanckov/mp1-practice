@@ -23,7 +23,7 @@
 void create_library(book* lib, size_t* lib_s, size_t start_size);
 
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
-int fill_library(FILE* src_file, book* lib);
+int fill_library(FILE* src_file, book** lib, size_t* lib_s);
 
 // создает структуру book на основе однострочного представления
 book fill_book(char* src);
