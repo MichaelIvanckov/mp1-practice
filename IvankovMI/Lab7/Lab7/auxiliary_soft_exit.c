@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "platform_compability.h"
 #include "auxiliary_soft_exit.h"
 
 

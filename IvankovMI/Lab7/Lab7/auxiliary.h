@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "platform_compability.h"
 #include "library.h"
 
 #define N 20 // ожидаемое кол-во симв в строке в БД

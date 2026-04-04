@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+#include "platform_compability.h"
 #include "library.h"
 #include "auxiliary_soft_exit.h"
 #include "auxiliary.h"
@@ -18,7 +19,7 @@ void create_library(book* lib, size_t* lib_s, size_t start_size);
 int fill_library(FILE* src_file, book** lib, size_t* lib_s);
 book fill_book(char* src);
 
-static char* read_line(FILE* f, size_t start_size);
+static char* read_line(FILE* f, size_t start_size, bool* valid);
 static char* pretty_format(char* str);
 static bool check_valid_symb(char symb, const char* forbidden, size_t n);
 static void trim_spaces(char* str);

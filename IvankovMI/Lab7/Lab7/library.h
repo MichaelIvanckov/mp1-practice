@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "platform_compability.h"
 
 
 // структура представления книги
@@ -16,14 +17,14 @@ struct book_ {
 	unsigned year;  // год издания
 	char* str;      // указатель на строку с исходной информацией о книге для очистки памяти
 };
+typedef struct book_ book; // структура представления книги
 
-struct library_s { // структура представления библиотеки
+// структура представления библиотеки
+struct library_s {
 	book* list;
 	size_t lenth;
 	size_t size;
 };
-
-typedef struct book_ book; // структура представления книги
 typedef struct library_s library_t; // структура представления библиотеки
 
 extern book* library_;

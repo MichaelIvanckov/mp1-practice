@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "platform_compability.h"
+
 // макс кол-во открытых файлов (нужно дл€ м€гкого аварийного выхода из программы) 
 #define MAX_FILES 20
 

@@ -41,5 +41,8 @@
     <ClInclude Include="costil.h">
       <Filter>Исходные файлы</Filter>
     </ClInclude>
+    <ClInclude Include="platform_compability.h">
+      <Filter>Исходные файлы</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
