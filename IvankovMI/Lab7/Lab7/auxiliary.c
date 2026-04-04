@@ -75,8 +75,8 @@ book fill_book(char* src) {
 	int i;
 	for (i = 0; i < 4; i++) {
 		char* str = pretty_format(info[i]);
-		if (!str) {
-			perror("Ошибка при чтении информации о книге: одно из полей пустое");
+		if (!str) {  // str = NULL в случае отсутствия токена (strtok_s) или в случае "схлопывания" сторки после удаления пробелов (pretty_format)
+			perror("Ошибка при чтении информации о книге: одно из полей отсутствует или пустое");
 			soft_exit();
 		}
 	}
@@ -137,7 +137,7 @@ static char* read_line(FILE* f, size_t start_size, bool* valid) {
 // убирает пробелы, табуляцию и кавчки из начала и конца строки, убирает двойные пробелы между словами,
 // возвращает указатель на подстроку, начинающуюся с первого разрешенного символа
 static char* pretty_format(char* str) {
-	if (str == NULL) return NULL;
+	if (str == NULL) return NULL;  // в случае NULL возвращаем NULL для проверок в fill_book
 	char* start = str;
 	size_t len = strlen(str);
 	int i;
