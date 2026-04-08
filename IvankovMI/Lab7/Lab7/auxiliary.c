@@ -256,7 +256,8 @@ char** tokenize(const char* str, const char* delimiters, int* count) {
 	token = strtok(copy, delimiters);
 	while (token) {
 		tokens[i] = strdup(token);
-		if (!tokens[i]) {  //?????
+		
+		if (!tokens[i]) {  //если ошибка при strdup возвращаем NULL
 			// Освобождаем уже выделенные токены
 			for (int j = 0; j < i; ++j) free(tokens[j]);
 			free(tokens);
@@ -283,7 +284,7 @@ void free_tokens(char** tokens) {
 
 
 // Проверка, является ли needle подстрокой haystack (без учёта регистра)
-static int contains_ignore_case(const char* haystack, const char* needle) {
+bool contains_ignore_case(const char* haystack, const char* needle) {
 	char* h_lower = strdup(haystack);
 	char* n_lower = strdup(needle);
 	if (!h_lower || !n_lower) {
@@ -293,15 +294,15 @@ static int contains_ignore_case(const char* haystack, const char* needle) {
 	}
 	str_to_lower(h_lower);
 	str_to_lower(n_lower);
-	int found = (strstr(h_lower, n_lower) != NULL);
+	bool found = (strstr(h_lower, n_lower) != NULL);
 	free(h_lower);
 	free(n_lower);
 	return found;
 }
 
 // Основная функция поиска
-book* find_book(book* arr, size_t size, const char* substr) {
-	// Разделители: пробельные символы и распространённые знаки пунктуации
+book* find_book(book* lib, size_t size, const char* substr) {
+	// Разделители: пробельные символы и знаки пунктуации
 	const char* delimiters = " \t\n\r\f\v.,;:!?()\"'—–";
 
 	// Токенизация запроса
@@ -314,10 +315,10 @@ book* find_book(book* arr, size_t size, const char* substr) {
 
 	book* result = NULL;
 	for (size_t i = 0; i < size; ++i) {
-		if (!arr[i].str) continue;
+		if (!lib[i].str) continue;
 
 		int str_cnt;
-		char** str_tokens = tokenize(arr[i].str, delimiters, &str_cnt);
+		char** str_tokens = tokenize(lib[i].str, delimiters, &str_cnt);
 		if (!str_tokens || str_cnt == 0) {
 			if (str_tokens) free_tokens(str_tokens);
 			continue;
@@ -332,7 +333,7 @@ book* find_book(book* arr, size_t size, const char* substr) {
 		}
 
 		if (q_idx == query_cnt) {
-			result = &arr[i];
+			result = &lib[i];
 			free_tokens(str_tokens);
 			break;
 		}
