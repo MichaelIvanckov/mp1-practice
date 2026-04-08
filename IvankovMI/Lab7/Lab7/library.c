@@ -3,7 +3,7 @@
 #include "platform_compability.h"
 #include "library.h"
 
-book* library_;
+book* library;
 size_t lib_size;
 
-library_t library;
+library_t library_;

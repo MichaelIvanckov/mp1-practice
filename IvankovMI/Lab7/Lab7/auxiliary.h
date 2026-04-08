@@ -28,3 +28,11 @@ int fill_library(FILE* src_file, book** lib, size_t* lib_s);
 
 // создает структуру book на основе однострочного представления
 book fill_book(char* src);
+
+// перевод строки в нижний регистр для поиска
+void str_to_lower(char* s);
+
+// Токенизация строки с копированием с заданными разделителями.
+// Возвращает массив указателей на копии токенов (в нижнем регистре),
+// заканчивающийся NULL. Количество токенов сохраняется в *count.
+char** tokenize(const char* str, const char* delimiters, int* count);

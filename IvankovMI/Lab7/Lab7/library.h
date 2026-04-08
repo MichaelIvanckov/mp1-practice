@@ -19,7 +19,7 @@ struct book_ {
 };
 typedef struct book_ book; // структура представления книги
 
-// структура представления библиотеки
+// структура представления библиотеки  (не используется)
 struct library_s {
 	book* list;
 	size_t lenth;
@@ -27,7 +27,7 @@ struct library_s {
 };
 typedef struct library_s library_t; // структура представления библиотеки
 
-extern book* library_;
+extern book* library;
 extern size_t lib_size;
 
-extern library_t library;
+extern library_t library_;

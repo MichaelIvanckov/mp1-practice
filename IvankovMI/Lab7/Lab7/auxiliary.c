@@ -212,3 +212,71 @@ static int s_to_year(char* s) {
 	}
 	return res;
 }
+
+
+// перевод строки в нижний регистр на месте для поиска
+void str_to_lower(char* s) {
+	for (; *s; ++s) *s = tolower(*s);
+}
+
+
+// Токенизация строки с копированием с заданными разделителями.
+// Возвращает массив указателей на копии токенов (в нижнем регистре),
+// заканчивающийся NULL. Количество токенов сохраняется в *count.
+char** tokenize(const char* str, const char* delimiters, int* count) {
+	if (!str) return NULL;
+
+	char* copy = strdup(str);
+	if (!copy) return NULL;
+
+	// Первый проход: подсчёт токенов
+	int n = 0;
+	char* token = strtok(copy, delimiters);
+	while (token) {
+		n++;
+		token = strtok(NULL, delimiters);
+	}
+
+	if (n == 0) {
+		free(copy);
+		*count = 0;
+		return NULL;
+	}
+
+	// Выделение памяти под массив указателей (n+1 для NULL)
+	char** tokens = malloc((n + 1) * sizeof(char*));
+	if (!tokens) {
+		free(copy);
+		return NULL;
+	}
+
+	// Второй проход: заполнение массива
+	strcpy(copy, str);  // восстанавливаем исходную строку
+	int i = 0;
+	token = strtok(copy, delimiters);
+	while (token) {
+		tokens[i] = strdup(token);
+		if (!tokens[i]) {  //?????
+			// Освобождаем уже выделенные токены
+			for (int j = 0; j < i; ++j) free(tokens[j]);
+			free(tokens);
+			free(copy);
+			return NULL;
+		}
+		str_to_lower(tokens[i]);
+		i++;
+		token = strtok(NULL, delimiters);
+	}
+	tokens[i] = NULL;
+	*count = n;
+	free(copy);
+	return tokens;
+}
+
+
+// Освобождение массива токенов
+void free_tokens(char** tokens) {
+	if (!tokens) return;
+	for (int i = 0; tokens[i]; ++i) free(tokens[i]);
+	free(tokens);
+}
