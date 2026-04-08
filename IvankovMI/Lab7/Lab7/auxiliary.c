@@ -280,3 +280,65 @@ void free_tokens(char** tokens) {
 	for (int i = 0; tokens[i]; ++i) free(tokens[i]);
 	free(tokens);
 }
+
+
+// Проверка, является ли needle подстрокой haystack (без учёта регистра)
+static int contains_ignore_case(const char* haystack, const char* needle) {
+	char* h_lower = strdup(haystack);
+	char* n_lower = strdup(needle);
+	if (!h_lower || !n_lower) {
+		free(h_lower);
+		free(n_lower);
+		return 0;
+	}
+	str_to_lower(h_lower);
+	str_to_lower(n_lower);
+	int found = (strstr(h_lower, n_lower) != NULL);
+	free(h_lower);
+	free(n_lower);
+	return found;
+}
+
+// Основная функция поиска
+book* find_book(book* arr, size_t size, const char* substr) {
+	// Разделители: пробельные символы и распространённые знаки пунктуации
+	const char* delimiters = " \t\n\r\f\v.,;:!?()\"'—–";
+
+	// Токенизация запроса
+	int query_cnt;
+	char** query_tokens = tokenize(substr, delimiters, &query_cnt);
+	if (!query_tokens || query_cnt == 0) {
+		if (query_tokens) free_tokens(query_tokens);
+		return NULL;   // пустой запрос не считается совпадением
+	}
+
+	book* result = NULL;
+	for (size_t i = 0; i < size; ++i) {
+		if (!arr[i].str) continue;
+
+		int str_cnt;
+		char** str_tokens = tokenize(arr[i].str, delimiters, &str_cnt);
+		if (!str_tokens || str_cnt == 0) {
+			if (str_tokens) free_tokens(str_tokens);
+			continue;
+		}
+
+		// Проверяем, что все токены запроса встречаются в порядке следования слов строки
+		int q_idx = 0;
+		for (int s_idx = 0; s_idx < str_cnt && q_idx < query_cnt; ++s_idx) {
+			if (contains_ignore_case(str_tokens[s_idx], query_tokens[q_idx])) {
+				q_idx++;   // переходим к следующему токену запроса
+			}
+		}
+
+		if (q_idx == query_cnt) {
+			result = &arr[i];
+			free_tokens(str_tokens);
+			break;
+		}
+		free_tokens(str_tokens);
+	}
+
+	free_tokens(query_tokens);
+	return result;
+}
