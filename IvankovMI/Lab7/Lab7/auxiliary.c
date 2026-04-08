@@ -215,7 +215,7 @@ static int s_to_year(char* s) {
 
 
 // перевод строки в нижний регистр на месте для поиска
-void str_to_lower(char* s) {
+static void str_to_lower(char* s) {
 	for (; *s; ++s) *s = tolower(*s);
 }
 
@@ -226,7 +226,7 @@ void str_to_lower(char* s) {
 char** tokenize(const char* str, const char* delimiters, int* count) {
 	if (!str) return NULL;
 
-	char* copy = strdup(str);
+	char* copy = _strdup(str);
 	if (!copy) return NULL;
 
 	// Первый проход: подсчёт токенов
@@ -251,17 +251,18 @@ char** tokenize(const char* str, const char* delimiters, int* count) {
 	}
 
 	// Второй проход: заполнение массива
-	strcpy(copy, str);  // восстанавливаем исходную строку
+	strcpy_s(copy, strlen(str), str);  // восстанавливаем исходную строку
 	int i = 0;
 	token = strtok(copy, delimiters);
 	while (token) {
-		tokens[i] = strdup(token);
+		tokens[i] = _strdup(token);
 		
-		if (!tokens[i]) {  //если ошибка при strdup возвращаем NULL
+		if (!tokens[i]) {  //если ошибка при _strdup возвращаем NULL
 			// Освобождаем уже выделенные токены
 			for (int j = 0; j < i; ++j) free(tokens[j]);
 			free(tokens);
 			free(copy);
+			soft_exit();
 			return NULL;
 		}
 		str_to_lower(tokens[i]);
@@ -285,8 +286,8 @@ void free_tokens(char** tokens) {
 
 // Проверка, является ли needle подстрокой haystack (без учёта регистра)
 bool contains_ignore_case(const char* haystack, const char* needle) {
-	char* h_lower = strdup(haystack);
-	char* n_lower = strdup(needle);
+	char* h_lower = _strdup(haystack);
+	char* n_lower = _strdup(needle);
 	if (!h_lower || !n_lower) {
 		free(h_lower);
 		free(n_lower);
@@ -298,48 +299,4 @@ bool contains_ignore_case(const char* haystack, const char* needle) {
 	free(h_lower);
 	free(n_lower);
 	return found;
-}
-
-// Основная функция поиска
-book* find_book(book* lib, size_t size, const char* substr) {
-	// Разделители: пробельные символы и знаки пунктуации
-	const char* delimiters = " \t\n\r\f\v.,;:!?()\"'—–";
-
-	// Токенизация запроса
-	int query_cnt;
-	char** query_tokens = tokenize(substr, delimiters, &query_cnt);
-	if (!query_tokens || query_cnt == 0) {
-		if (query_tokens) free_tokens(query_tokens);
-		return NULL;   // пустой запрос не считается совпадением
-	}
-
-	book* result = NULL;
-	for (size_t i = 0; i < size; ++i) {
-		if (!lib[i].str) continue;
-
-		int str_cnt;
-		char** str_tokens = tokenize(lib[i].str, delimiters, &str_cnt);
-		if (!str_tokens || str_cnt == 0) {
-			if (str_tokens) free_tokens(str_tokens);
-			continue;
-		}
-
-		// Проверяем, что все токены запроса встречаются в порядке следования слов строки
-		int q_idx = 0;
-		for (int s_idx = 0; s_idx < str_cnt && q_idx < query_cnt; ++s_idx) {
-			if (contains_ignore_case(str_tokens[s_idx], query_tokens[q_idx])) {
-				q_idx++;   // переходим к следующему токену запроса
-			}
-		}
-
-		if (q_idx == query_cnt) {
-			result = &lib[i];
-			free_tokens(str_tokens);
-			break;
-		}
-		free_tokens(str_tokens);
-	}
-
-	free_tokens(query_tokens);
-	return result;
 }

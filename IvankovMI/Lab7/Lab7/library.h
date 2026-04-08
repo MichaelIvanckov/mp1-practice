@@ -31,3 +31,11 @@ extern book* library;
 extern size_t lib_size;
 
 extern library_t library_;
+
+
+// Функции:
+
+// Основная функция поиска, возвращает указатель на массив указателей на книги в куче, изменяет f_cnt на кол-во найденных книг, завершает массив NULL
+book* find_books(book* lib, size_t size, const char* substr, size_t* f_cnt);
+
+void print_books(book** bks, size_t cnt);
