@@ -45,5 +45,8 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt);
 // вывести инфо каждой книги из массива
 void print_books(book** bks, size_t cnt);
 
+// Вопрос в stdin о пути файла базы данных и заполнение библиотеки
+void start_ask();
+
 // Обработка запроса из stdin, возвращает false, если требуется выйти, работает с глобалами library
 bool process_query();
