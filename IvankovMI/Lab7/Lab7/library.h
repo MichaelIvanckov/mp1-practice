@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "platform_compability.h"
 
@@ -35,7 +36,14 @@ extern library_t library_;
 
 // Функции:
 
-// Основная функция поиска, возвращает указатель на массив указателей на книги в куче, изменяет f_cnt на кол-во найденных книг, завершает массив NULL
-book* find_books(book* lib, size_t size, const char* substr, size_t* f_cnt);
+// создание библиотеки из информации из файла, работает с глобалами library
+void init_library(char* path);
 
+// Основная функция поиска, возвращает указатель на массив указателей на книги в куче, изменяет f_cnt на кол-во найденных книг, завершает массив NULL
+book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt);
+
+// вывести инфо каждой книги из массива
 void print_books(book** bks, size_t cnt);
+
+// Обработка запроса из stdin, возвращает false, если требуется выйти, работает с глобалами library
+bool process_query();

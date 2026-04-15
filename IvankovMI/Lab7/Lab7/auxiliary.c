@@ -26,7 +26,8 @@ static void trim_spaces(char* str);
 static int s_to_year(char* s);
 
 
-// Создание бибилиотеки, выделение памяти
+
+// Создание бибилиотеки, выделение памяти начального размера, изменение lib_s
 void create_library(book* lib, size_t* lib_s, size_t start_size) {
 	*lib_s = start_size;          // начальнаый размер
 	lib = (book*)malloc(start_size * sizeof(book*));
@@ -87,7 +88,7 @@ book fill_book(char* src) {
 
 // Чтение одной строки из файла с реаллокацией в больший буфер (возвращает указатель на выделенный буфер)
 // изменет параметр valid на false, если строка пустая
-static char* read_line(FILE* f, size_t start_size, bool* valid) {
+char* read_line(FILE* f, size_t start_size, bool* valid) {
 	size_t size = start_size;      // начальный размер буфера
 	if (f == NULL) {
 		perror("Невозможно читать файл по нулевому указателю");
@@ -229,12 +230,14 @@ char** tokenize(const char* str, const char* delimiters, int* count) {
 	char* copy = _strdup(str);
 	if (!copy) return NULL;
 
+	char* saveptr = NULL;
+
 	// Первый проход: подсчёт токенов
 	int n = 0;
-	char* token = strtok(copy, delimiters);
+	char* token = strtok_s(copy, delimiters, &saveptr);
 	while (token) {
 		n++;
-		token = strtok(NULL, delimiters);
+		token = strtok_s(NULL, delimiters, &saveptr);
 	}
 
 	if (n == 0) {
@@ -253,7 +256,8 @@ char** tokenize(const char* str, const char* delimiters, int* count) {
 	// Второй проход: заполнение массива
 	strcpy_s(copy, strlen(str), str);  // восстанавливаем исходную строку
 	int i = 0;
-	token = strtok(copy, delimiters);
+	saveptr = NULL; // на всякий
+	token = strtok_s(copy, delimiters, &saveptr);
 	while (token) {
 		tokens[i] = _strdup(token);
 		
@@ -267,7 +271,7 @@ char** tokenize(const char* str, const char* delimiters, int* count) {
 		}
 		str_to_lower(tokens[i]);
 		i++;
-		token = strtok(NULL, delimiters);
+		token = strtok_s(NULL, delimiters, &saveptr);
 	}
 	tokens[i] = NULL;
 	*count = n;

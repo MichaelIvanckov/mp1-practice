@@ -8,20 +8,35 @@
 #include <stdbool.h>
 
 #include "platform_compability.h"
+#include "auxiliary_soft_exit.h"
 #include "auxiliary.h"
 #include "library.h"
+
+
+// Основные ресурсы: библиотека и ее длина
 
 book* library;
 size_t lib_size;
 
-library_t library_;
+library_t library_; // не используется, можно убрать
 
+
+
+
+// создание библиотеки из информации из файла, работает с глобалами library
+void init_library(char* path) {
+	FILE* source = save_fopen(path, "r");
+	create_library(library, &lib_size, K);
+	int sz = fill_library(source, &library, &lib_size);
+	printf("Из текстовой базы получено %d книг", sz);
+	soft_fclose(source);
+}
 
 
 // Основная функция поиска, возвращает указатель на массив указателей на книги в куче, изменяет f_cnt на кол-во найденных книг, завершает массив NULL
-book* find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
+book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 	// Разделители: пробельные символы и знаки пунктуации
-	const char* delimiters = " \t\n\r\f\v.,;:!?()\"'—–";
+	const char* delimiters = DELIMS;
 
 	// Токенизация запроса
 	int query_cnt;
@@ -32,7 +47,7 @@ book* find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 	}
 
 	book** result = (book*)calloc(K, sizeof(book*)); // чтобы все лишние были нулями на всякий случай
-	size_t res_l = K;
+	size_t res_l = K * sizeof(book*);
 
 	for (size_t i = 0; i < size; ++i) {
 		if (!lib[i].authors) continue;
@@ -69,13 +84,55 @@ book* find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 	return result;
 }
 
+
+// вывести инфо книги
 static void print_book(book* bk) {
-	fprint("Название: %s\nАвтор(ы): %s\n Издательство: %s\nГод издания %d\n\n", bk->name, bk->authors, bk->publ, bk->year);
+	printf("Название: %s\nАвтор(ы): %s\n Издательство: %s\nГод издания %d\n\n", bk->name, bk->authors, bk->publ, bk->year);
 }
 
+
+// вывести инфо каждой книги из массива
 void print_books(book** bks, size_t cnt) {
 	for (int i = 0; i < cnt && !bks[i]; ++i)
 		print_book(bks[i]);
 }
 
-void process_query(); // Дописать
+
+// Вопрос в stdin о пути файла базы данных и заполнение библиотеки
+void start_ask() {
+	printf("Введите путь к файлу библиотеки:\n");
+	bool valid = true;
+	char* input = read_line(stdin, M, &valid);
+	while (valid == false) {
+		free(input);
+		input = read_line(stdin, M, &valid);
+	}
+	init_library(input);
+}
+
+
+// Обработка запроса из stdin, возвращает false, если требуется выйти, работает с глобалами library
+bool process_query() {
+	printf("Введите подстроку для поиска книги по автору\n(можно несеолько слов, например 'Пушкин А. С.' найдет книги с автором 'Пушкин Александр Сергеевич'):\n");
+	bool valid = true;
+	char* input = read_line(stdin, M, &valid);
+	while (valid == false) {
+		free(input);
+		input = read_line(stdin, M, &valid);
+	}
+	if (strcmp(input, "exit") || strcmp(input, "выход")) {
+		free(input);
+		return false;
+	}
+	size_t res_l;
+	book** result = find_books(library, lib_size, input, &res_l);
+	if (res_l) {
+		printf("По вашему запросу найдено %llu книг:", res_l);
+		print_books(result, res_l);
+	}
+	else
+		printf("По вашему запросу ничего не найдено");
+	free(input);
+	free(result);
+	return true;
+}
