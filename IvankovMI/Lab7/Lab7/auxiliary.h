@@ -41,7 +41,7 @@
 //
 
 // Создание бибилиотеки, выделение памяти начального размера, изменение lib_s
-void create_library(book* lib, size_t* lib_s, size_t start_size);
+void create_library(book** lib, size_t* lib_s, size_t start_size);
 
 // считывает информацию о книгах из файла и заполняет "библиотеку" структурами book
 // релоцирует library, если колл-во книг больше, чем ожидаемое
@@ -50,6 +50,9 @@ int fill_library(FILE* src_file, book** lib, size_t* lib_s);
 
 // создает структуру book на основе однострочного представления
 book fill_book(char* src);
+
+// Удаление библиотеки - освобождение памяти всех книг и установка указателя в NULL (на всякий случай)
+void delete_library(book** lib, size_t* lib_s);
 
 
 ////////////////////////////////////////////////////////////////////////////

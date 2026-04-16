@@ -15,7 +15,7 @@
 
 // Функции, опредленные здесь (в т. ч. статические, для устраения ошибок компиляци):
 
-void create_library(book* lib, size_t* lib_s, size_t start_size);
+void create_library(book** lib, size_t* lib_s, size_t start_size);
 int fill_library(FILE* src_file, book** lib, size_t* lib_s);
 book fill_book(char* src);
 char* read_line(FILE* f, size_t start_size, bool* valid);
@@ -28,13 +28,23 @@ static int s_to_year(char* s);
 
 
 // Создание бибилиотеки, выделение памяти начального размера, изменение lib_s
-void create_library(book* lib, size_t* lib_s, size_t start_size) {
+void create_library(book** lib, size_t* lib_s, size_t start_size) {
 	*lib_s = start_size;          // начальнаый размер
-	lib = (book*)malloc(start_size * sizeof(book*));
-	if (lib) {
+	*lib = (book*)malloc(start_size * sizeof(book));
+	if (!*lib) {
 		perror("Не удалось выделить память при созданиии бибилиотеки (malloc)");
 		soft_exit();
 	}
+}
+
+
+// Удаление библиотеки - освобождение памяти всех книг и установка указателя в NULL (на всякий случай)
+void delete_library(book** lib, size_t* lib_s) {
+	for (int i = 0; i < lib_s; i++)
+		free((*lib)[i].str);
+	free(*lib);
+	*lib = NULL;
+	*lib_s = 0;
 }
 
 
@@ -48,19 +58,27 @@ int fill_library(FILE* src_file, book** lib, size_t* lib_s) {
 	str = read_line(src_file, sizeof(char) * (N + 1), &valid);
 	while (str != NULL) {
 		if (valid) {  // если прочитанная строка пустая, пропускаем
-			if (i++ > *lib_s) {  // релоцируем библиотеку в случае переполнения
-				book* new_lib = realloc(*lib, *lib_s * sizeof(book*));
+			if (i >= *lib_s) {  // релоцируем библиотеку в случае переполнения
+				book* new_lib = (book*)realloc(*lib, *lib_s * sizeof(book) * 2);
 				if (!new_lib) {
 					perror("Не удалось релоцировать библиотеку при чтении файла (realloc)");
 					soft_exit();
 					return -1; // чтоб статический не ругался
 				}
 				*lib = new_lib;
+				*lib_s *= 2;
 			}
-		(*lib)[i] = fill_book(str);
+			(*lib)[i++] = fill_book(str);
 		}
 		str = read_line(src_file, sizeof(char) * (N + 1), &valid);
 	}
+	book* new_lib = (book*)realloc(*lib, i * sizeof(book));  // уменьшаем выделенную память обратно под колличество книг
+	if (!new_lib) {                                          // да, не оптимально, но что поделать, зато кондово
+		perror("Не удалось релоцировать библиотеку при освобождении лишнего (realloc)");
+		soft_exit();
+	}
+	*lib = new_lib;
+	*lib_s = i;
 	return i;
 }
 

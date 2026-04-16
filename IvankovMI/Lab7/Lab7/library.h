@@ -39,6 +39,9 @@ extern library_t library_;
 // создание библиотеки из информации из файла, работает с глобалами library
 void init_library(char* path);
 
+// Удаление библиотеки - освобождение памяти всех книг, работает с глобалами library
+void del_library_glob();
+
 // Основная функция поиска, возвращает указатель на массив указателей на книги в куче, изменяет f_cnt на кол-во найденных книг, завершает массив NULL
 book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt);
 

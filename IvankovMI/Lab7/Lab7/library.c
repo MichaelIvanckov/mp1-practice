@@ -26,10 +26,16 @@ library_t library_; // не используется, можно убрать
 // создание библиотеки из информации из файла, работает с глобалами library
 void init_library(char* path) {
 	FILE* source = save_fopen(path, "r");
-	create_library(library, &lib_size, K);
+	create_library(&library, &lib_size, K);
 	int sz = fill_library(source, &library, &lib_size);
 	printf("Из текстовой базы получено %d книг", sz);
 	soft_fclose(source);
+}
+
+
+// Удаление библиотеки - освобождение памяти всех книг, работает с глобалами library
+void del_library_glob() {
+	delete_library(&library, &lib_size);
 }
 
 
@@ -47,6 +53,11 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 	}
 
 	book** result = (book**)calloc(K, sizeof(book*)); // чтобы все лишние были нулями на всякий случай
+	if (!result) {
+		perror("Не удалось выделить память под список найденных книг (calloc)");
+		soft_exit();
+		return NULL; // чтоб статический не ругался
+	}
 	size_t res_l = K * sizeof(book*);
 
 	for (size_t i = 0; i < size; ++i) {
@@ -71,8 +82,14 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 		}
 
 		if (total_ok) {
-			if (i >= res_l)
+			if (i >= res_l) {
 				result = (book**)realloc(result, res_l *= sizeof(book*) * 2); // увеличим res_l
+				if (!result) {
+					perror("Не удалось релоцировать список найденных книг при составлении (realloc)");
+					soft_exit();
+					return NULL; // чтоб статический не ругался
+				}
+			}
 			result[i] = &lib[i];
 			free_tokens(str_tokens);
 			break;

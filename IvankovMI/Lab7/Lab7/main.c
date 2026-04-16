@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
 	else
 		start_ask();
 	while (process_query());
+	del_library_glob();
 	printf("Выход...");
 	return 0;
 }
