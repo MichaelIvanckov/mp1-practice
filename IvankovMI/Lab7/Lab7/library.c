@@ -46,7 +46,7 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 		return NULL;   // пустой запрос не считается совпадением
 	}
 
-	book** result = (book*)calloc(K, sizeof(book*)); // чтобы все лишние были нулями на всякий случай
+	book** result = (book**)calloc(K, sizeof(book*)); // чтобы все лишние были нулями на всякий случай
 	size_t res_l = K * sizeof(book*);
 
 	for (size_t i = 0; i < size; ++i) {
@@ -72,7 +72,7 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 
 		if (total_ok) {
 			if (i >= res_l)
-				result = (book*)realloc(result, res_l * 2);
+				result = (book**)realloc(result, res_l *= sizeof(book*) * 2); // увеличим res_l
 			result[i] = &lib[i];
 			free_tokens(str_tokens);
 			break;
@@ -117,17 +117,17 @@ bool process_query() {
 	bool valid = true;
 	char* input = read_line(stdin, M, &valid);
 	while (valid == false) {
-		free(input);
+		free(input);    // очищаем просто "\0", но что уж поделать
 		input = read_line(stdin, M, &valid);
 	}
-	if (strcmp(input, "exit") || strcmp(input, "выход")) {
+	if (strcmp(input, "exit") == 0 || strcmp(input, "выход") == 0) {
 		free(input);
 		return false;
 	}
 	size_t res_l;
 	book** result = find_books(library, lib_size, input, &res_l);
 	if (res_l) {
-		printf("По вашему запросу найдено %llu книг:", res_l);
+		printf("По вашему запросу найдено %zu книг:", res_l);
 		print_books(result, res_l);
 	}
 	else

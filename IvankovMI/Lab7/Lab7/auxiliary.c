@@ -53,6 +53,7 @@ int fill_library(FILE* src_file, book** lib, size_t* lib_s) {
 				if (!new_lib) {
 					perror("Не удалось релоцировать библиотеку при чтении файла (realloc)");
 					soft_exit();
+					return -1; // чтоб статический не ругался
 				}
 				*lib = new_lib;
 			}
