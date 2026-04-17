@@ -138,10 +138,6 @@
     <ClInclude Include="costil.h" />
     <ClInclude Include="library.h" />
     <ClInclude Include="platform_compability.h" />
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Lab7.rc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="library_example.csv" />
