@@ -73,9 +73,9 @@ FILE* save_fopen(const char* filename, const char* mode) {
 		soft_exit();
 #endif
 	}
-	files_counter++;
 	opend_resources[files_counter] = file;
 	closed_resources[files_counter] = false;
+	files_counter++;
 	return file;
 }
 

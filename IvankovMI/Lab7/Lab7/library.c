@@ -30,6 +30,10 @@ void init_library(char* path) {
 	int sz = fill_library(source, &library, &lib_size);
 	printf("Из текстовой базы получено %d книг", sz);
 	soft_fclose(source);
+	if (sz <= 0) {
+		perror("Библиотека не может быть пустой");
+		soft_exit();
+	}
 }
 
 
@@ -120,9 +124,14 @@ void start_ask() {
 	printf("Введите путь к файлу библиотеки:\n");
 	bool valid = true;
 	char* input = read_line(stdin, M, &valid);
-	while (valid == false) {
+	while (valid == false && input != NULL) {
 		free(input);
 		input = read_line(stdin, M, &valid);
+	}
+	if (input == NULL) {  // read_line возвращает NULL только в случае невозможности чтения из-за EOF
+		perror("Не удалось прочитать пользовательский ввод пути (достигнут EOF)");
+		soft_exit();
+		return; // чтобы статический не ругался
 	}
 	init_library(input);
 }
@@ -130,12 +139,17 @@ void start_ask() {
 
 // Обработка запроса из stdin, возвращает false, если требуется выйти, работает с глобалами library
 bool process_query() {
-	printf("Введите подстроку для поиска книги по автору\n(можно несеолько слов, например 'Пушкин А. С.' найдет книги с автором 'Пушкин Александр Сергеевич'):\n");
+	printf("Введите подстроку для поиска книги по автору\n(можно несколько слов, например 'Пушкин А. С.' найдет книги с автором 'Пушкин Александр Сергеевич'):\n");
 	bool valid = true;
 	char* input = read_line(stdin, M, &valid);
-	while (valid == false) {
+	while (valid == false && input != NULL) {
 		free(input);    // очищаем просто "\0", но что уж поделать
 		input = read_line(stdin, M, &valid);
+	}
+	if (input == NULL) {  // read_line возвращает NULL только в случае невозможности чтения из-за EOF
+		perror("Не удалось прочитать пользовательский запрос (достигнут EOF)");
+		soft_exit();
+		return false; // чтобы статический не ругался
 	}
 	if (strcmp(input, "exit") == 0 || strcmp(input, "выход") == 0) {
 		free(input);
