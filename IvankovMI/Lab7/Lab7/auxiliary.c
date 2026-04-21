@@ -292,7 +292,7 @@ char** tokenize(const char* str, const char* delimiters, int* count) {
 	}
 
 	// Второй проход: заполнение массива
-	strcpy_s(copy, strlen(str), str);  // восстанавливаем исходную строку
+	strcpy_s(copy, strlen(str) + 1, str);  // восстанавливаем исходную строку
 	int i = 0;
 	saveptr = NULL; // на всякий
 	token = strtok_s(copy, delimiters, &saveptr);
