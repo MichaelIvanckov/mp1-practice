@@ -80,7 +80,7 @@ int fill_library(FILE* src_file, book** lib, size_t* lib_s) {
 			else
 				(*lib)[i++] = bk;
 		}
-		free(str);
+		// free(str); - критическа€ ошибка, книга "забирает" себе выделенную строку и ее нельз€ чистить
 		str = read_line(src_file, sizeof(char) * (N + 1), &valid);
 	}
 	book* new_lib = (book*)realloc(*lib, i * sizeof(book));  // уменьшаем выделенную пам€ть обратно под колличество книг
