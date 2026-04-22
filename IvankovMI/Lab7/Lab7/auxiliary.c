@@ -340,5 +340,8 @@ bool contains_ignore_case(const char* haystack, const char* needle) {
 	bool found = (strstr(h_lower, n_lower) != NULL);
 	free(h_lower);
 	free(n_lower);
-	return found;
+	if (found != NULL)
+		return true;
+	else
+		return false;
 }
