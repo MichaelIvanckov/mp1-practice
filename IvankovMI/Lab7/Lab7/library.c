@@ -18,7 +18,7 @@
 book* library;
 size_t lib_size;
 
-library_t library_; // не используется, можно убрать
+
 
 
 
@@ -28,7 +28,7 @@ void init_library(char* path) {
 	FILE* source = save_fopen(path, "r");
 	create_library(&library, &lib_size, K);
 	int sz = fill_library(source, &library, &lib_size);
-	printf("Из текстовой базы получено %d книг", sz);
+	printf("Из текстовой базы получено %d книг\n", sz);
 	soft_fclose(source);
 	if (sz <= 0) {
 		perror("Библиотека не может быть пустой");
@@ -62,7 +62,8 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 		soft_exit();
 		return NULL; // чтоб статический не ругался
 	}
-	size_t res_l = K * sizeof(book*);
+	size_t res_l = K;
+	size_t res_cnt = 0;
 
 	for (size_t i = 0; i < size; ++i) {
 		if (!lib[i].authors) continue;
@@ -76,13 +77,16 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 
 		// Проверяем, что все токены запроса встречаются среди токенов "найденной" строки
 		int q_idx = 0;
-		bool total_ok = true;
+		bool total_ok = true;   // по умолчанию, считаем запрос удовлетворенным
 		for (; q_idx < query_cnt; ++q_idx) {
-			bool ok = true;
-			for (int s_idx = 0; s_idx < str_cnt; ++s_idx)
-				ok = contains_ignore_case(str_tokens[s_idx], query_tokens[q_idx]);
-			if (ok)
-				q_idx++;   // переходим к следующему токену запроса
+			bool ok = false;    // по умолч. мы пока не нашли подходящ. слов
+			for (int s_idx = 0; s_idx < str_cnt; ++s_idx) {
+				bool t_ok = contains_ignore_case(str_tokens[s_idx], query_tokens[q_idx]);
+				if (t_ok)       // если хоть одно слово подошло, 
+					ok = true;  // считаем данный токен запроса удовлетворенным
+			}
+			if (!ok)               // если хоть один токен запроса неудовлеворен,
+				total_ok = false;  // считаем запрос неудовлетворенным
 		}
 
 		if (total_ok) {
@@ -95,12 +99,13 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 				}
 			}
 			result[i] = &lib[i];
-			free_tokens(str_tokens);
-			break;
+			res_cnt++;
+			//free_tokens(str_tokens);
+			//break;
 		}
 		free_tokens(str_tokens);
 	}
-
+	*f_cnt = res_cnt;
 	free_tokens(query_tokens);
 	return result;
 }
@@ -108,16 +113,26 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 
 // вывести инфо книги
 static void print_book(book* bk) {
-	printf("Название: %s\nАвтор(ы): %s\n Издательство: %s\nГод издания %d\n\n", bk->name, bk->authors, bk->publ, bk->year);
+	printf("Название: %s\nАвтор(ы): %s\nИздательство: %s\nГод издания: %d\n\n", bk->name, bk->authors, bk->publ, bk->year);
 }
 
 
 // вывести инфо каждой книги из массива
 void print_books(book** bks, size_t cnt) {
-	for (int i = 0; i < cnt && !bks[i]; ++i)
+	for (int i = 0; (i < cnt) && (bks[i] != NULL); ++i)
 		print_book(bks[i]);
 }
 
+
+// тестовая функция для вывода книги по номеру
+void test(book* lib, int n) {
+	print_book(lib + n);
+}
+
+void test_all(book* lib, size_t n) {
+	for (size_t i = 0; i < n; i++)
+		print_book(lib + i);
+}
 
 // Вопрос в stdin о пути файла базы данных и заполнение библиотеки
 void start_ask() {
@@ -155,14 +170,21 @@ bool process_query() {
 		free(input);
 		return false;
 	}
+	int test_n;
+	if (sscanf_s(input, "test %d", &test_n)) {  // по кодовому слову выводим книгу по номеру
+		test(library, test_n);
+		return true;
+	}
+	if (strcmp(input, "test all") == 0)
+		test_all(library, lib_size);  // по другому кодовому слову выводим все книги
 	size_t res_l;
 	book** result = find_books(library, lib_size, input, &res_l);
 	if (res_l) {
-		printf("По вашему запросу найдено %zu книг:", res_l);
+		printf("По вашему запросу найдено %zu книг:\n\n", res_l);
 		print_books(result, res_l);
 	}
 	else
-		printf("По вашему запросу ничего не найдено");
+		printf("По вашему запросу ничего не найдено\n");
 	free(input);
 	free(result);
 	return true;

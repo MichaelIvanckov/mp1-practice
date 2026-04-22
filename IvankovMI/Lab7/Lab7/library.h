@@ -20,18 +20,12 @@ struct book_ {
 };
 typedef struct book_ book; // структура представления книги
 
-// структура представления библиотеки  (не используется)
-struct library_s {
-	book* list;
-	size_t lenth;
-	size_t size;
-};
-typedef struct library_s library_t; // структура представления библиотеки
+
 
 extern book* library;
 extern size_t lib_size;
 
-extern library_t library_;
+
 
 
 // Функции:
@@ -53,3 +47,6 @@ void start_ask();
 
 // Обработка запроса из stdin, возвращает false, если требуется выйти, работает с глобалами library
 bool process_query();
+
+// тестовая функция для вывода книги по номеру
+void test(book** lib, int n);

@@ -180,12 +180,12 @@ static char* pretty_format(char* str) {
 	// находим первый разрешенный символ
 	for (i = 0; i < len; i++) {
 		if (!check_valid_symb(str[i], FORBIDDEN_SYMBS, lenof(FORBIDDEN_SYMBS, char)))
-			start = str + i;
+			start = str + i + 1;
 		else
 			break;
 	}
 	// ставим терминатор после последнего разрешенного символа
-	for (i = len - 1; i >= start; i--) {
+	for (i = len - 1; i >= 0; i--) {
 		if (check_valid_symb(str[i], 
 							 FORBIDDEN_SYMBS"\r\n",     // так как в конце также убираем новую строку
 							 lenof(FORBIDDEN_SYMBS, char) + 2)) {
