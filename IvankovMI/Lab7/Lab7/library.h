@@ -49,4 +49,7 @@ void start_ask();
 bool process_query();
 
 // тестовая функция для вывода книги по номеру
-void test(book** lib, int n);
+void test(book* lib, int n);
+
+// тестовая функция для вывода всех книг
+void test_all(book* lib, size_t n);

@@ -66,7 +66,7 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 	size_t res_cnt = 0;
 
 	for (size_t i = 0; i < size; ++i) {
-		if (!lib[i].authors) continue;
+		if (!lib[i].authors) continue;  // хотя такого по идее не должно быть
 
 		int str_cnt;  // кол-во токенов в найденной строке
 		char** str_tokens = tokenize(lib[i].authors, delimiters, &str_cnt);
@@ -91,14 +91,15 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 
 		if (total_ok) {
 			if (i >= res_l) {
-				result = (book**)realloc(result, res_l *= sizeof(book*) * 2); // увеличим res_l
-				if (!result) {
+				res_l *= 2;      // увеличим res_l
+				result = (book**)realloc(result, res_l * sizeof(book*)); // и перенесем данные
+				if (result == NULL) {
 					perror("Не удалось релоцировать список найденных книг при составлении (realloc)");
 					soft_exit();
 					return NULL; // чтоб статический не ругался
 				}
 			}
-			result[i] = &lib[i];
+			result[res_cnt] = &lib[i];
 			res_cnt++;
 			//free_tokens(str_tokens);
 			//break;
@@ -107,6 +108,7 @@ book** find_books(book* lib, size_t size, const char* substr, size_t* f_cnt) {
 	}
 	*f_cnt = res_cnt;
 	free_tokens(query_tokens);
+	//book* DEBB[10] = result; // не получилось
 	return result;
 }
 
@@ -119,8 +121,12 @@ static void print_book(book* bk) {
 
 // вывести инфо каждой книги из массива
 void print_books(book** bks, size_t cnt) {
-	for (int i = 0; (i < cnt) && (bks[i] != NULL); ++i)
+	for (int i = 0; (i < cnt) && (bks[i] != NULL); ++i) {
 		print_book(bks[i]);
+		bool deb1 = i + 1 < cnt;
+		bool deb2 = bks[i + 1];
+		bool deb3 = false;
+	}
 }
 
 
@@ -129,10 +135,12 @@ void test(book* lib, int n) {
 	print_book(lib + n);
 }
 
+// тестовая функция для вывода всех книг
 void test_all(book* lib, size_t n) {
 	for (size_t i = 0; i < n; i++)
 		print_book(lib + i);
 }
+
 
 // Вопрос в stdin о пути файла базы данных и заполнение библиотеки
 void start_ask() {

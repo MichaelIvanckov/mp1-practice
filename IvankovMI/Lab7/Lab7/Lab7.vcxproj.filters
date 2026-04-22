@@ -47,5 +47,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="library_example.csv" />
+    <None Include="library_exampleANSI.csv" />
   </ItemGroup>
 </Project>

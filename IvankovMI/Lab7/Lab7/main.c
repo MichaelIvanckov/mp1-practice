@@ -22,5 +22,6 @@ int main(int argc, char* argv[]) {
 	while (process_query());
 	del_library_glob();
 	printf("Выход...\n");
+	auto au = 'fe';   // офигеть, реально работает
 	return 0;
 }
